@@ -4,3 +4,4 @@
 
 # get your local machine ip address : curl ifconfig.me
 # add your IP address to add networks tab in 'connections' to connect to cloud sql instance
+# use pip install -r requirements.txt
