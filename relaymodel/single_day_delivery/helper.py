@@ -63,6 +63,55 @@ def mark_order_received_at_hub(order_number):
 		except:
 			return False
 
+def mark_orders_transit_with_bag(bag):
+	with transaction.atomic():
+		try:
+			orders = Order.objects.filter(bag_id=bag.id)
+			for order in orders:
+				order.to_transit()
+				order.save()
+			return True
+		except:
+			return False
+
+def mark_bag_transit(bag_code):
+	with transaction.atomic():
+		try:
+			bag = Bag.objects.get(code=bag_code)
+			bag.to_transit()
+			bag.save()
+
+			mark_orders_transit_with_bag(bag)
+			return True
+		except:
+			return False
+
+def mark_orders_received_with_bag(bag_id, current_hub_id):
+	with transaction.atomic():
+		try:
+			orders = Order.objects.filter(bag_id=bag_id)
+			# import pdb; pdb.set_trace()
+			for order in orders:
+				order.to_received_at_hub()
+				order.current_hub_id = current_hub_id
+				order.save()
+			return True
+		except:
+			return False
+
+
+def mark_bag_received(bag_code, current_hub_id):
+	with transaction.atomic():
+		try:
+			bag = Bag.objects.get(code=bag_code)
+			bag.to_received()
+			bag.save()
+			success = mark_orders_received_with_bag(bag.id, current_hub_id)
+			if not success:
+				return False
+			return True
+		except:
+			return False
 
 
 

@@ -11,8 +11,7 @@ urlpatterns = [
     url(r'^order/transit/$', views.OrderTransit.as_view(), name='order_transit'),
     # url(r'^hub/scan/$', views.HubScan.as_view(), name='hub_scan'),
     url(r'^hub/receive/$', views.HubReceive.as_view(), name='hub_receive'),
-    
-    # url(r'^bag/transit/$', views.BagTransit.as_view(), name='bag_transit'),
-    # url(r'^bag/receive/$', views.BagReceive.as_view(), name='bag_receive'),
+    url(r'^bag/transit/$', views.BagTransit.as_view(), name='bag_transit'),
+    url(r'^bag/receive/$', views.BagReceive.as_view(), name='bag_receive'),
 
 ]

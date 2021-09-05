@@ -63,4 +63,27 @@ class HubReceive(APIView):
 			return Response({"message": "Success"}, status=status.HTTP_200_OK)
 		return Response({"message": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
 
+class BagTransit(APIView):
+	def post(self, request):
+		bag_code = request.data.get('bag_code', None)
+		if not bag_code:
+			return Response({"message": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
+
+		success = helper.mark_bag_transit(bag_code)
+		if success:
+			return Response({"message": "Success"}, status=status.HTTP_200_OK)
+		return Response({"message": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
+
+class BagReceive(APIView):
+	def post(self, request):
+		bag_code = request.data.get('bag_code', None)
+		hub_id = request.data.get('hub_id', None)
+		if not bag_code:
+			return Response({"message": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
+
+		success = helper.mark_bag_received(bag_code, hub_id)
+		if success:
+			return Response({"message": "Success"}, status=status.HTTP_200_OK)
+		return Response({"message": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
+
 
