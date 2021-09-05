@@ -32,7 +32,7 @@ class Hub(BaseModel):
 	address = models.CharField(max_length=50, null=True, blank=True)
 	latitude = models.FloatField(null=True, blank=True)
 	longitude = models.FloatField(null=True, blank=True)
-	major_hub = models.ForeignKey("Hub", on_delete=models.CASCADE, null=True)
+	major_hub = models.ForeignKey("Hub", on_delete=models.CASCADE, null=True, blank=True)
 
 	def __str__(self):
 		return self.name
@@ -45,6 +45,9 @@ class SellerShops(BaseModel):
 	longitude = models.FloatField(null=True, blank=True)
 	hub = models.ForeignKey(Hub, on_delete=models.CASCADE)
 
+	def __str__(self):
+		return self.name
+
 class Society(BaseModel):
 	name = models.CharField(max_length=50, unique=True)
 	address = models.CharField(max_length=50, null=True, blank=True)
@@ -52,6 +55,9 @@ class Society(BaseModel):
 	longitude = models.FloatField(null=True, blank=True)
 	mygate_id = models.IntegerField(null=True, blank=True)
 	hub = models.ForeignKey(Hub, on_delete=models.CASCADE)
+
+	def __str__(self):
+		return self.name
 
 class Transporter(BaseModel):
 	name = models.CharField(max_length=50, unique=True)
@@ -139,7 +145,8 @@ class Order(BaseModel):
 	def to_delivered(self):
 		pass
 
-	def save(self):
+	def save(self, *args, **kwargs):
+		super(Order, self).save(*args, **kwargs)
 		from .tasks import create_entry_in_tracking
 		create_entry_in_tracking(self)
 

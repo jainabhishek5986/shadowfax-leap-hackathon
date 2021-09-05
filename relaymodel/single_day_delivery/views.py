@@ -41,3 +41,26 @@ class SellerReceive(APIView):
 			return Response({"message": "Success"}, status=status.HTTP_200_OK)
 		return Response({"message": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
 
+class OrderTransit(APIView):
+	def post(self, request):
+		order_number = request.data.get('order_number', None)
+		if not order_number:
+			return Response({"message": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
+
+		success = helper.mark_order_transit_from_seller(order_number)
+		if success:
+			return Response({"message": "Success"}, status=status.HTTP_200_OK)
+		return Response({"message": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
+
+class HubReceive(APIView):
+	def post(self, request):
+		order_number = request.data.get('order_number', None)
+		if not order_number:
+			return Response({"message": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
+
+		success = helper.mark_order_received_at_hub(order_number)
+		if success:
+			return Response({"message": "Success"}, status=status.HTTP_200_OK)
+		return Response({"message": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
+
+
