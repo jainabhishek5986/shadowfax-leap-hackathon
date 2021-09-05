@@ -32,6 +32,7 @@ class Hub(BaseModel):
 	address = models.CharField(max_length=50, null=True, blank=True)
 	latitude = models.FloatField(null=True, blank=True)
 	longitude = models.FloatField(null=True, blank=True)
+	major_hub = models.ForeignKey("Hub", on_delete=models.CASCADE, null=True)
 
 	def __str__(self):
 		return self.name
@@ -84,6 +85,7 @@ class Order(BaseModel):
 	society = models.ForeignKey(Society, on_delete=models.CASCADE)
 	current_hub = models.ForeignKey(Hub, on_delete=models.CASCADE)
 	order_status = FSMIntegerField(choices=status_choices, default=0, db_index=True)
+
 
 
 class Tracking(BaseModel):
