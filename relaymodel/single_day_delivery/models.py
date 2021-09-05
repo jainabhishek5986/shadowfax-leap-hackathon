@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 import jsonfield
 from django_fsm import FSMIntegerField, transition, FSMField, get_available_FIELD_transitions, get_available_user_FIELD_transitions
 # Create your models here.
@@ -33,7 +34,7 @@ class Hub(BaseModel):
 	longitude = models.FloatField(null=True, blank=True)
 
 	def __str__(self):
-		return self.id
+		return self.name
 
 class SellerShops(BaseModel):
 	name = models.CharField(max_length=50, unique=True)
@@ -86,5 +87,5 @@ class Order(BaseModel):
 
 
 class Tracking(BaseModel):
-	order = models.ForeignKey(Order,on_delete=models.CASCADE)
+	order = models.ForeignKey(Order, on_delete=models.CASCADE)
 	status = models.IntegerField(choices=Order.status_choices)
