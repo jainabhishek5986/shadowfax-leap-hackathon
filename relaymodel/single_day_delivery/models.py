@@ -61,33 +61,89 @@ class Transporter(BaseModel):
 	travel_time = models.IntegerField(null=True, blank=True)
 	vehicle_number = models.CharField(max_length=20, unique=True)
 
-class Order(BaseModel):
+
+class Bag(BaseModel):
 	NEW = 0
-	SELLER_ACCEPTED = 1
-	SELLER_IN_TRANSIT = 2
-	RECEIVED_AT_HUB = 3
-	TRANSIT_WITHIN_HUBS = 4
-	RECEIVED_AT_DESTINATION_HUB = 5
-	DELIVERED = 6
+	IN_TRANSIT = 1
+	RECEIVED = 2
+
+	UPSTREAM = 0
+	DOWNSTREAM = 1
+
+	bag_type_choices = (
+		(UPSTREAM, 'Forward'),
+		(DOWNSTREAM, 'Reverse')
+		)
 
 	status_choices = (
 		(NEW, 'New'),
-		(SELLER_ACCEPTED, 'Seller Received Order'),
-		(SELLER_IN_TRANSIT, 'Seller On the Way'),
+		(IN_TRANSIT, 'In Transit'),
+		(RECEIVED, 'Bag Received')
+		)
+
+	code = models.CharField(max_length=50, unique=True)
+	bag_type = models.IntegerField(choices = bag_type_choices, default = UPSTREAM)
+	origin = models.IntegerField(null=True, blank=True)
+	destination = models.IntegerField(null=True, blank = True)
+	status = FSMIntegerField(choices=status_choices, default=0, db_index=True)
+
+	@transition(field=status, source=[NEW, RECEIVED], target=IN_TRANSIT)
+	def to_transit(self):
+		pass
+
+	@transition(field=status, source=[IN_TRANSIT], target=RECEIVED)
+	def to_received(self):
+		pass
+
+class Order(BaseModel):
+	NEW = 0
+	SELLER_RECEIVED = 1
+	IN_TRANSIT = 2
+	RECEIVED_AT_HUB = 3
+	OFD = 4
+	DELIVERED = 5
+
+	status_choices = (
+		(NEW, 'New'),
+		(SELLER_RECEIVED, 'Seller Received Order'),
+		(IN_TRANSIT, 'In Transit'),
 		(RECEIVED_AT_HUB, 'Order Received at Hub'),
-		(TRANSIT_WITHIN_HUBS, 'Order transit within hubs'),
-		(RECEIVED_AT_DESTINATION_HUB, 'Order Received at Destination Hub'),
+		(OFD, 'Out for Delivery'),
 		(DELIVERED, 'Order Delivered')
 		)
 
 	order_number = models.CharField(max_length=50, unique=True)
+	bag_id = models.IntegerField(null=True, blank=True)
 	seller_shop = models.ForeignKey(SellerShops, on_delete=models.CASCADE)
 	society = models.ForeignKey(Society, on_delete=models.CASCADE)
 	current_hub = models.ForeignKey(Hub, on_delete=models.CASCADE)
-	order_status = FSMIntegerField(choices=status_choices, default=0, db_index=True)
+	order_status = FSMIntegerField(choices=status_choices, default=NEW, db_index=True)
 
+	@transition(field=order_status, source=NEW, target=SELLER_RECEIVED)
+	def to_seller_received(self):
+		pass
 
+	@transition(field=order_status, source=[SELLER_RECEIVED, RECEIVED_AT_HUB], target=IN_TRANSIT)
+	def to_transit(self):
+		pass
+
+	@transition(field=order_status, source=[IN_TRANSIT], target=RECEIVED_AT_HUB)
+	def to_received_at_hub(self):
+		pass
+
+	@transition(field=order_status, source=RECEIVED_AT_HUB, target=OFD)
+	def to_ofd(self):
+		pass
+
+	@transition(field=order_status, source=OFD, target=DELIVERED)
+	def to_delivered(self):
+		pass
+
+	def save(self):
+		from .tasks import create_entry_in_tracking
+		create_entry_in_tracking(self)
 
 class Tracking(BaseModel):
 	order = models.ForeignKey(Order, on_delete=models.CASCADE)
 	status = models.IntegerField(choices=Order.status_choices)
+

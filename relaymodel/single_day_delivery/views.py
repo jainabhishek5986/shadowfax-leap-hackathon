@@ -5,6 +5,8 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.exceptions import AuthenticationFailed, ValidationError
 import single_day_delivery.helper as helper 
+import string
+import random
 
 
 def index(request):
@@ -13,8 +15,29 @@ def index(request):
 # Create your views here.
 class TrackOrder(APIView):
 	def get(self, request):
-		order_id = request.GET.get('order_id', None)
-		if not order_id:
+		order_number = request.GET.get('order_number', None)
+		if not order_number:
 			return Response({"message": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
-		tracking_data = helper.get_order_tracking_details(order_id)
+		tracking_data = helper.get_order_tracking_details(order_number)
 		return Response({"message": "Success", "data": tracking_data.data}, status=status.HTTP_200_OK)
+
+class OrderCreation(APIView):
+	def post(self, request):
+		order_details = request.data.get('order_details', None)
+		count = request.data.get('count', 1)
+		if not order_details:
+			orders_data = helper.generate_random_order(count)
+		return Response({"message": "Success", "data": orders_data.data}, status=status.HTTP_200_OK)
+
+class SellerReceive(APIView):
+	def post(self, request):
+		order_number = request.data.get('order_number', None)
+
+		if not order_number:
+			return Response({"message": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
+
+		success = helper.receive_order_at_seller(order_number)
+		if success:
+			return Response({"message": "Success"}, status=status.HTTP_200_OK)
+		return Response({"message": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
+
