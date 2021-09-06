@@ -36,9 +36,9 @@ class SellerReceive(APIView):
 		if not order_number:
 			return Response({"message": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
 
-		success = helper.receive_order_at_seller(order_number)
+		success, data = helper.receive_order_at_seller(order_number)
 		if success:
-			return Response({"message": "Success"}, status=status.HTTP_200_OK)
+			return Response({"message": "Order Received/Accepted By Seller", "data": data}, status=status.HTTP_200_OK)
 		return Response({"message": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
 
 class OrderTransit(APIView):
@@ -47,9 +47,9 @@ class OrderTransit(APIView):
 		if not order_number:
 			return Response({"message": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
 
-		success = helper.mark_order_transit_from_seller(order_number)
+		success, data = helper.mark_order_transit_from_seller(order_number)
 		if success:
-			return Response({"message": "Success"}, status=status.HTTP_200_OK)
+			return Response({"message": "Success", "data": data}, status=status.HTTP_200_OK)
 		return Response({"message": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
 
 class HubReceive(APIView):
@@ -58,9 +58,9 @@ class HubReceive(APIView):
 		if not order_number:
 			return Response({"message": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
 
-		success = helper.mark_order_received_at_hub(order_number)
+		success, data = helper.mark_order_received_at_hub(order_number)
 		if success:
-			return Response({"message": "Success"}, status=status.HTTP_200_OK)
+			return Response({"message": "Success", "data": data}, status=status.HTTP_200_OK)
 		return Response({"message": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
 
 class BagTransit(APIView):
@@ -69,9 +69,9 @@ class BagTransit(APIView):
 		if not bag_code:
 			return Response({"message": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
 
-		success = helper.mark_bag_transit(bag_code)
+		success, data = helper.mark_bag_transit(bag_code)
 		if success:
-			return Response({"message": "Success"}, status=status.HTTP_200_OK)
+			return Response({"message": "Success", "data": data}, status=status.HTTP_200_OK)
 		return Response({"message": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
 
 class BagReceive(APIView):
@@ -81,9 +81,30 @@ class BagReceive(APIView):
 		if not bag_code:
 			return Response({"message": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
 
-		success = helper.mark_bag_received(bag_code, hub_id)
+		success, data = helper.mark_bag_received(bag_code, hub_id)
 		if success:
-			return Response({"message": "Success"}, status=status.HTTP_200_OK)
+			return Response({"message": "Success", "data": data}, status=status.HTTP_200_OK)
 		return Response({"message": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
 
+class BagOFD(APIView):
+	def post(self, request):
+		bag_code = request.data.get('bag_code', None)
+		if not bag_code:
+			return Response({"message": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
 
+		success, data = helper.mark_bag_ofd(bag_code)
+		if success:
+			return Response({"message": "Success", "data": data}, status=status.HTTP_200_OK)
+		return Response({"message": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
+
+class OrderDelivered(APIView):
+	def post(self, request):
+		order_number = request.data.get('order_number', None)
+
+		if not order_number:
+			return Response({"message": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
+
+		success, data = helper.mark_order_delivered(order_number)
+		if success:
+			return Response({"message": "Success", "data": data}, status=status.HTTP_200_OK)
+		return Response({"message": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)

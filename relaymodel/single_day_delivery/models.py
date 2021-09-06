@@ -72,6 +72,7 @@ class Bag(BaseModel):
 	NEW = 0
 	IN_TRANSIT = 1
 	RECEIVED = 2
+	CLOSED = 3
 
 	UPSTREAM = 0
 	DOWNSTREAM = 1
@@ -87,10 +88,19 @@ class Bag(BaseModel):
 		(RECEIVED, 'Bag Received')
 		)
 
+	SOCIETY = 0
+	HUB = 1
+
+	destination_type_choices = (
+		(SOCIETY, 'Society'),
+		(HUB, 'Hub')
+		)
+
 	code = models.CharField(max_length=50, unique=True)
 	bag_type = models.IntegerField(choices = bag_type_choices, default = UPSTREAM)
 	origin = models.IntegerField(null=True, blank=True)
 	destination = models.IntegerField(null=True, blank = True)
+	destination_type = models.IntegerField(choices= destination_type_choices, default=1)
 	status = FSMIntegerField(choices=status_choices, default=0, db_index=True)
 
 	@transition(field=status, source=[NEW, RECEIVED], target=IN_TRANSIT)
@@ -99,6 +109,10 @@ class Bag(BaseModel):
 
 	@transition(field=status, source=[IN_TRANSIT], target=RECEIVED)
 	def to_received(self):
+		pass
+
+	@transition(field=status, source=[RECEIVED], target=CLOSED)
+	def to_closed(self):
 		pass
 
 class Order(BaseModel):
@@ -144,6 +158,11 @@ class Order(BaseModel):
 	@transition(field=order_status, source=OFD, target=DELIVERED)
 	def to_delivered(self):
 		pass
+
+	def get_status_display(self):
+		for status in status_choices:
+			if status[0]==self.order_status:
+				return status[1]
 
 	def save(self, *args, **kwargs):
 		super(Order, self).save(*args, **kwargs)

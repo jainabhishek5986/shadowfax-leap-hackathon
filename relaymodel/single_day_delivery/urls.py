@@ -13,5 +13,7 @@ urlpatterns = [
     url(r'^hub/receive/$', views.HubReceive.as_view(), name='hub_receive'),
     url(r'^bag/transit/$', views.BagTransit.as_view(), name='bag_transit'),
     url(r'^bag/receive/$', views.BagReceive.as_view(), name='bag_receive'),
+    url(r'^bag/ofd/$', views.BagOFD.as_view(), name='bag_ofd'),
+    url(r'^order/delivered/$', views.OrderDelivered.as_view(), name='order_delivered'),
 
 ]
