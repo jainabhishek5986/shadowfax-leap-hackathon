@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.db.models.deletion import RestrictedError
 from django.utils import timezone
 import jsonfield
 from django_fsm import FSMIntegerField, transition, FSMField, get_available_FIELD_transitions, get_available_user_FIELD_transitions
@@ -18,6 +19,28 @@ class BaseModel(models.Model):
 		self.updated = timezone.now()
 		return super(BaseModel, self).save(*args, **kwargs)
 
+class User(BaseModel):
+	CUSTOMER = 0
+	SELLER = 1
+	TRUCK_DRIVER = 2
+	RIDER = 3
+
+	user_type = (
+		(CUSTOMER, 'CUSTOMER'),
+		(SELLER, 'SELLER'),
+		(TRUCK_DRIVER, 'TRUCK_DRIVER'),
+		(RIDER, 'RIDER')
+	)
+	name = models.CharField(max_length=50, unique=True)
+	type = models.IntegerField(choices=user_type, null=True, blank=True)
+	society = models.ForeignKey("Society", on_delete=models.CASCADE, null=True, blank=True)
+	address = models.CharField(max_length=50, null=True, blank=True)
+	latitude = models.FloatField(null=True, blank=True)
+	longitude = models.FloatField(null=True, blank=True)
+	phone_number = models.IntegerField(max_length=10, null=True, blank=True)
+
+	def __str__(self):
+		return self.name
 
 class Hub(BaseModel):
 	MINOR_HUB = 0
@@ -43,6 +66,7 @@ class SellerShops(BaseModel):
 	address = models.CharField(max_length=50, null=True, blank=True)
 	latitude = models.FloatField(null=True, blank=True)
 	longitude = models.FloatField(null=True, blank=True)
+	delivery_partner = models.BooleanField()
 	hub = models.ForeignKey(Hub, on_delete=models.CASCADE)
 
 	def __str__(self):
@@ -54,6 +78,7 @@ class Society(BaseModel):
 	latitude = models.FloatField(null=True, blank=True)
 	longitude = models.FloatField(null=True, blank=True)
 	mygate_id = models.IntegerField(null=True, blank=True)
+	delivery_partner = models.BooleanField()
 	hub = models.ForeignKey(Hub, on_delete=models.CASCADE)
 
 	def __str__(self):
@@ -138,6 +163,11 @@ class Order(BaseModel):
 	society = models.ForeignKey(Society, on_delete=models.CASCADE)
 	current_hub = models.ForeignKey(Hub, on_delete=models.CASCADE)
 	order_status = FSMIntegerField(choices=status_choices, default=NEW, db_index=True)
+	rider_assigned = models.BooleanField()
+
+	@transition(field=rider_assigned, source=False, target=True)
+	def rider_assigned_to_order(self):
+		pass
 
 	@transition(field=order_status, source=NEW, target=SELLER_RECEIVED)
 	def to_seller_received(self):

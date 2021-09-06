@@ -48,9 +48,11 @@ def receive_order_at_seller(order_number):
 		# logging.error()
 		return False, None
 
-def mark_order_transit_from_seller(order_number):
+def mark_order_transit_from_seller(order_number,delivery_partner):
 	try:
 		order = Order.objects.get(order_number=order_number)
+		if(not delivery_partner) :
+			order.rider_assigned_to_order()
 		order.to_transit()
 		order.save()
 		logging.info("Order - {} marked Transit By Seller".format(order_number))
