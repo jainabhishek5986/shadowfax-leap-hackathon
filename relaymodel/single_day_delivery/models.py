@@ -256,6 +256,7 @@ class Order(BaseModel):
 		self.partner_id = None
 		self.partner_type = None 
 		from .tasks import allocate_bin_to_bag
+		import pdb ; pdb.set_trace()
 		allocate_bin_to_bag(self.bag_id, self.current_hub_id)
 
 	@transition(field=order_status, source=RECEIVED_AT_HUB, target=OFD)
