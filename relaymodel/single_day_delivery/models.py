@@ -122,7 +122,10 @@ class VehicleTransitDetails(BaseModel):
 class BinBagMapping(BaseModel):
 	bin_id = models.IntegerField(null=False)
 	bag_id = models.IntegerField(null=False)
-	active = models.IntegerField(null=False)
+	active = models.IntegerField(null=False, default=1)
+
+	class Meta:
+		unique_together = ('bin_id', 'bag_id')
 
 class Bin(BaseModel):
 	MINOR_TO_MAJOR = 0
@@ -183,18 +186,26 @@ class Bag(BaseModel):
 	destination_type = models.IntegerField(choices= destination_type_choices, default=1)
 	status = FSMIntegerField(choices=status_choices, default=0, db_index=True)
 	weight = models.FloatField(null=True, default=0)
+	current_hub_id = models.IntegerField(null=True, blank = True)
 
 	@transition(field=status, source=[NEW, RECEIVED], target=IN_TRANSIT)
 	def to_transit(self):
 		pass
 
 	@transition(field=status, source=[IN_TRANSIT], target=RECEIVED)
-	def to_received(self):
-		pass
+	def to_received(self, current_hub_id):
+		from .tasks import allocate_bin_to_bag
+		self.current_hub_id = current_hub_id
+		allocate_bin_to_bag(self, current_hub_id)
 
 	@transition(field=status, source=[RECEIVED], target=CLOSED)
 	def to_closed(self):
 		pass
+
+	def save(self, *args, **kwargs):
+		from .tasks import update_weight_capacity_bag
+		self.weight = update_weight_capacity_bag(self)
+		super(Bag, self).save(*args, **kwargs)
 
 class Order(BaseModel):
 	NEW = 0
