@@ -47,7 +47,7 @@ class User(BaseModel):
 		(SOCIETY_PARTNER, 'Society Partner')
 	)
 
-	name = models.CharField(max_length=50, unique=True)
+	name = models.CharField(max_length=50)
 	user_type = models.IntegerField(choices=user_type_choices, null=True, blank=True)
 	location_id = models.IntegerField(null=True, blank=True)
 	address = models.CharField(max_length=50, null=True, blank=True)
@@ -100,14 +100,53 @@ class Society(BaseModel):
 	def __str__(self):
 		return self.name
 
-class Transporter(BaseModel):
-	name = models.CharField(max_length=50, unique=True)
-	contact = models.CharField(max_length=50, null=False)
+class Vehicle(BaseModel):
+	partner = models.ForeignKey(User, on_delete=models.CASCADE)
+	#per km cost
 	cost = models.IntegerField(null=True, blank=True)
-	start_times = jsonfield.JSONField(max_length=500, default={}, blank=True, null=True)
-	travel_time = models.IntegerField(null=True, blank=True)
+	filling_time = models.IntegerField(null=True, blank=True)
+	capacity = models.IntegerField(null=True, blank=True)
 	vehicle_number = models.CharField(max_length=20, unique=True)
+	current_hub_id = models.IntegerField(null=False)
 
+	def __str__(self):
+		return self.partner.name
+
+class VehicleTransitDetails(BaseModel):
+	vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
+	transit_time = models.DateTimeField(editable=False)
+	received_time = models.DateTimeField(editable=False)
+	origin = models.IntegerField(null=True, blank=True)
+	destination = models.IntegerField(null=True, blank=True)
+
+class BinBagMapping(BaseModel):
+	bin_id = models.IntegerField(null=False)
+	bag_id = models.IntegerField(null=False)
+	active = models.IntegerField(null=False)
+
+class Bin(BaseModel):
+	MINOR_TO_MAJOR = 0
+	MAJOR_TO_MAJOR = 1
+	MAJOR_TO_MINOR = 2
+
+	bin_type_choices = (
+		(MINOR_TO_MAJOR, 'Minor to Major'),
+		(MAJOR_TO_MAJOR, 'Major to Major'),
+		(MAJOR_TO_MINOR, 'Major to Minor')
+	)
+
+	bin_category = models.IntegerField(choices=bin_type_choices, default=MINOR_TO_MAJOR)
+	bin_origin_hub = models.IntegerField(null=True, blank=True)
+	bin_destination_hub = models.IntegerField(null=True, blank=True)
+	current_capacity = models.IntegerField(default=0)
+
+	class Meta:
+		unique_together = ('bin_origin_hub', 'bin_destination_hub')
+
+	def save(self, *args, **kwargs):
+		from .tasks import update_current_capacity_bin
+		update_current_capacity_bin(self)
+		super(Bin, self).save(*args, **kwargs)
 
 class Bag(BaseModel):
 	NEW = 0
@@ -143,6 +182,7 @@ class Bag(BaseModel):
 	destination = models.IntegerField(null=True, blank = True)
 	destination_type = models.IntegerField(choices= destination_type_choices, default=1)
 	status = FSMIntegerField(choices=status_choices, default=0, db_index=True)
+	weight = models.FloatField(null=True, default=0)
 
 	@transition(field=status, source=[NEW, RECEIVED], target=IN_TRANSIT)
 	def to_transit(self):
@@ -155,13 +195,6 @@ class Bag(BaseModel):
 	@transition(field=status, source=[RECEIVED], target=CLOSED)
 	def to_closed(self):
 		pass
-
-
-# class Shipment(BaseModel):
-# 	NEW = 0
-# 	OFP = 1
-# 	PICKED = 2
-# 	DELIVERED_AT_HUB = 3
 
 class Order(BaseModel):
 	NEW = 0
@@ -188,6 +221,8 @@ class Order(BaseModel):
 	order_status = FSMIntegerField(choices=status_choices, default=NEW, db_index=True)
 	partner_type = models.IntegerField(choices=User.partner_type_choices, null=True, blank=True)
 	partner_id = models.IntegerField(null=True, blank=True)
+	expected_delivery_hour = models.IntegerField(null=True, blank=True)
+	weight = models.FloatField(null=True, default=0)
 
 	@transition(field=order_status, source=NEW, target=SELLER_RECEIVED)
 	def to_seller_received(self):
