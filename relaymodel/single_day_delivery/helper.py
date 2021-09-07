@@ -95,6 +95,7 @@ def mark_order_transit_from_seller(order_number, partner_required):
 def mark_order_received_at_hub(order_number):
 	with transaction.atomic():
 		try:
+			# import pdb ; pdb.set_trace()
 			create_bag_for_order(order_number)
 			order = Order.objects.get(order_number=order_number)
 			order.to_received_at_hub()
@@ -103,7 +104,7 @@ def mark_order_received_at_hub(order_number):
 			serialized_data = OrderSerializer(order)
 			return True, serialized_data.data
 		except Exception as e:
-			# print(str(e))
+			print(str(e))
 			return False, None
 
 

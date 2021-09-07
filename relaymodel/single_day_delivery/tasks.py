@@ -5,6 +5,37 @@ def create_entry_in_tracking(order):
 	t = Tracking.objects.create(order_id= order.id, status=order.order_status)
 	t.save()
 
+def get_route_for_order(order):
+	route_list = []
+	route_list.append(order.seller_shop.hub_id)
+	if order.seller_shop.hub.major_hub :
+		route_list.append(order.seller_shop.hub.major_hub)
+	if order.society.hub.major_hub :
+		route_list.append(order.society.hub.major_hub)
+	route_list.append(order.society.hub_id)
+
+
+def get_next_destination(order, current_hub) :
+	if current_hub == order.seller_shop.hub_id :
+		if order.seller_shop.hub.major_hub :
+			return order.seller_shop.hub.major_hub
+		else:
+			if order.society.hub.major_hub:
+				return order.society.hub.major_hub
+			else:
+				return order.society.hub_id
+	
+	elif current_hub == order.seller_shop.hub.major_hub :
+		if order.society.hub.major_hub:
+			return order.society.hub.major_hub
+		else:
+			return order.society.hub_id
+
+	elif current_hub == order.society.hub.major_hub:
+		return order.society.hub_id
+	else : 
+		return None 
+			
 def get_current_capacity_bin(bin):
 	bag_ids = list(BinBagMapping.objects.filter(bin_id=bin.id).values_list('bag_id', flat=True))
 	total_weight = Bag.objects.filter(id__in=bag_ids).aggregate(Sum('weight'))
@@ -28,7 +59,6 @@ def get_bin_type(current_bin, origin, destination):
 def inactivate_current_mapping(bag_id):
 	mapping = BinBagMapping.objects.filter(bag_id=bag_id, active=1)
 	mapping.update(active = 0)
-	bin_id = mapping[0].bin_id
 
 	print("LOGGING ==== Inactivated exisiting Mapping Bag Bin")
 
@@ -42,21 +72,14 @@ def create_bin_bag_mapping(bag_id, bin_id):
 	except:
 		return False
 
-def get_route_for_order(order):
-	return []
-
-def get_next_destination(route_list, current_hub_id):
-	if route_list == []:
-		return 2
-
-
 def allocate_bin_to_bag(bag_id, current_hub_id):
+	# import pdb; pdb.set_trace()
 	bag = Bag.objects.get(id=bag_id)
 	inactivate_current_mapping(bag.id)
 	random_order = Order.objects.filter(bag_id = bag_id).last()
-	route_list = get_route_for_order(random_order)
-	next_hub_location = get_next_destination(route_list, current_hub_id)
-	current_bin , created = Bin.objects.get_or_create(bin_origin_hub = current_hub_id, bin_destination_hub=next_hub_location)
+	# route_list = get_route_for_order(random_order)
+	next_hub_location = get_next_destination(random_order, current_hub_id)
+	current_bin , created = Bin.objects.get_or_create(bin_origin_hub = current_hub_id, bin_destination_hub=next_hub_location, current_capacity = 0)
 	if created:
 		current_bin.bin_type = get_bin_type(current_bin, current_hub_id, next_hub_location)
 	# current_bin.current_capacity = get_current_capacity_bin()
@@ -64,7 +87,7 @@ def allocate_bin_to_bag(bag_id, current_hub_id):
 	if success:
 		print("LOGGING ==== Bag Bin Mapping Created")
 		weight = get_current_capacity_bin(current_bin)
-		current_bin.weight = weight
+		current_bin.current_capacity = weight
 		current_bin.save()
 	else:
 		print("LOGGING ==== Failed : Bag Bin Mapping Creation")
@@ -77,4 +100,5 @@ def update_weight_after_bag_transit(bag):
 		current_bin = Bin.objects.get(id=bin_id)
 		current_bin.weight -= bag.weight
 		current_bin.save()
+
 
