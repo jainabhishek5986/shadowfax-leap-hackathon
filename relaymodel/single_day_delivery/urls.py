@@ -5,15 +5,18 @@ from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
+    #customer
     url(r'^tracking/$', views.TrackOrder.as_view(), name='track_order'),
     url(r'^order_creation/$', views.OrderCreation.as_view(), name='order_creation'),
+    #seller
     url(r'^seller/receive/$', views.SellerReceive.as_view(), name='seller_receive'),
     url(r'^order/transit/$', views.OrderTransit.as_view(), name='order_transit'),
-    # url(r'^hub/scan/$', views.HubScan.as_view(), name='hub_scan'),
+    #hub
     url(r'^hub/receive/$', views.HubReceive.as_view(), name='hub_receive'),
     url(r'^bag/transit/$', views.BagTransit.as_view(), name='bag_transit'),
     url(r'^bag/receive/$', views.BagReceive.as_view(), name='bag_receive'),
     url(r'^bag/ofd/$', views.BagOFD.as_view(), name='bag_ofd'),
+    #rider
     url(r'^order/delivered/$', views.OrderDelivered.as_view(), name='order_delivered'),
 
 ]

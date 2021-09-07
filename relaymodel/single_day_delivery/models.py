@@ -6,6 +6,10 @@ import jsonfield
 from django_fsm import FSMIntegerField, transition, FSMField, get_available_FIELD_transitions, get_available_user_FIELD_transitions
 # Create your models here.
 
+class Constants(models.Model):
+	name = models.CharField(max_length=50, unique=True)
+	value = jsonfield.JSONField(default={})
+
 class BaseModel(models.Model):
 	created = models.DateTimeField(editable=False)
 	updated = models.DateTimeField()
@@ -20,24 +24,36 @@ class BaseModel(models.Model):
 		return super(BaseModel, self).save(*args, **kwargs)
 
 class User(BaseModel):
-	CUSTOMER = 0
-	SELLER = 1
-	TRUCK_DRIVER = 2
-	RIDER = 3
+	HUB_INCHARGE = 0
+	CUSTOMER = 1
+	TRANSIT_PARTNER = 2
+	DELIVERY_PARTNER = 3
+	SHOP_PARTNER = 4
+	SOCIETY_PARTNER = 5
 
-	user_type = (
-		(CUSTOMER, 'CUSTOMER'),
-		(SELLER, 'SELLER'),
-		(TRUCK_DRIVER, 'TRUCK_DRIVER'),
-		(RIDER, 'RIDER')
+	user_type_choices = (
+		(HUB_INCHARGE, 'Hub Incharge'),
+		(CUSTOMER, 'Customer'),
+		(TRANSIT_PARTNER, 'Driver'),
+		(DELIVERY_PARTNER, 'Delivery Partner'),
+		(SHOP_PARTNER, 'Shop Partner'),
+		(SOCIETY_PARTNER, 'Society Partner')
 	)
+
+	partner_type_choices = (
+		(TRANSIT_PARTNER, 'Driver'),
+		(DELIVERY_PARTNER, 'Delivery Partner'),
+		(SHOP_PARTNER, 'Shop Partner'),
+		(SOCIETY_PARTNER, 'Society Partner')
+	)
+
 	name = models.CharField(max_length=50, unique=True)
-	type = models.IntegerField(choices=user_type, null=True, blank=True)
-	society = models.ForeignKey("Society", on_delete=models.CASCADE, null=True, blank=True)
+	user_type = models.IntegerField(choices=user_type_choices, null=True, blank=True)
+	location_id = models.IntegerField(null=True, blank=True)
 	address = models.CharField(max_length=50, null=True, blank=True)
 	latitude = models.FloatField(null=True, blank=True)
 	longitude = models.FloatField(null=True, blank=True)
-	phone_number = models.IntegerField(max_length=10, null=True, blank=True)
+	phone_number = models.IntegerField(max_length=10, null=True, blank=True, unique=True)
 
 	def __str__(self):
 		return self.name
@@ -66,7 +82,7 @@ class SellerShops(BaseModel):
 	address = models.CharField(max_length=50, null=True, blank=True)
 	latitude = models.FloatField(null=True, blank=True)
 	longitude = models.FloatField(null=True, blank=True)
-	delivery_partner = models.BooleanField()
+	partner_id = models.IntegerField(null=True, blank=True)
 	hub = models.ForeignKey(Hub, on_delete=models.CASCADE)
 
 	def __str__(self):
@@ -78,7 +94,7 @@ class Society(BaseModel):
 	latitude = models.FloatField(null=True, blank=True)
 	longitude = models.FloatField(null=True, blank=True)
 	mygate_id = models.IntegerField(null=True, blank=True)
-	delivery_partner = models.BooleanField()
+	partner_id = models.IntegerField(null=True, blank=True)
 	hub = models.ForeignKey(Hub, on_delete=models.CASCADE)
 
 	def __str__(self):
@@ -140,6 +156,13 @@ class Bag(BaseModel):
 	def to_closed(self):
 		pass
 
+
+# class Shipment(BaseModel):
+# 	NEW = 0
+# 	OFP = 1
+# 	PICKED = 2
+# 	DELIVERED_AT_HUB = 3
+
 class Order(BaseModel):
 	NEW = 0
 	SELLER_RECEIVED = 1
@@ -163,34 +186,34 @@ class Order(BaseModel):
 	society = models.ForeignKey(Society, on_delete=models.CASCADE)
 	current_hub = models.ForeignKey(Hub, on_delete=models.CASCADE)
 	order_status = FSMIntegerField(choices=status_choices, default=NEW, db_index=True)
-	rider_assigned = models.BooleanField()
-
-	@transition(field=rider_assigned, source=False, target=True)
-	def rider_assigned_to_order(self):
-		pass
+	partner_type = models.IntegerField(choices=User.partner_type_choices, null=True, blank=True)
+	partner_id = models.IntegerField(null=True, blank=True)
 
 	@transition(field=order_status, source=NEW, target=SELLER_RECEIVED)
 	def to_seller_received(self):
 		pass
 
 	@transition(field=order_status, source=[SELLER_RECEIVED, RECEIVED_AT_HUB], target=IN_TRANSIT)
-	def to_transit(self):
-		pass
+	def to_transit(self, partner_details={}):
+		partner_id = partner_details.get("partner_id", None)
+		partner_type = partner_details.get("partner_type", None)
 
 	@transition(field=order_status, source=[IN_TRANSIT], target=RECEIVED_AT_HUB)
 	def to_received_at_hub(self):
-		pass
+		self.partner_id = None
+		self.partner_type = None 
 
 	@transition(field=order_status, source=RECEIVED_AT_HUB, target=OFD)
-	def to_ofd(self):
+	def to_ofd(self, partner_details={}):
 		pass
 
 	@transition(field=order_status, source=OFD, target=DELIVERED)
 	def to_delivered(self):
-		pass
+		partner_id = partner_details.get("partner_id", None)
+		partner_type = partner_details.get("partner_type", None)
 
 	def get_status_display(self):
-		for status in status_choices:
+		for status in self.status_choices:
 			if status[0]==self.order_status:
 				return status[1]
 

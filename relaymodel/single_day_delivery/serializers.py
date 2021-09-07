@@ -37,9 +37,17 @@ class OrderSerializer(serializers.ModelSerializer):
 	def get_seller_name(self, obj):
 		return obj.seller_shop.name
 
+	def get_partner_name(self, obj):
+		if obj.partner_id:
+			try:
+				partner_name = User.objects.get(id = partner_id).name
+				return partner_name
+			except:
+				return None
+
 	class Meta:
 		model = Order
-		fields = ('order_number', 'bag_code', 'order_status', 'society_name', 'seller_name')
+		fields = ('order_number', 'bag_code', 'order_status', 'society_name', 'seller_name', 'partner_id', 'partner_name')
 
 class BagSerializer(serializers.ModelSerializer):
 

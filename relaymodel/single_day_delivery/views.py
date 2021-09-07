@@ -27,6 +27,8 @@ class OrderCreation(APIView):
 		count = request.data.get('count', 1)
 		if not order_details:
 			orders_data = helper.generate_random_order(count)
+		else:
+			orders_data = helper.create_order(order_details, count)
 		return Response({"message": "Success", "data": orders_data.data}, status=status.HTTP_200_OK)
 
 class SellerReceive(APIView):
