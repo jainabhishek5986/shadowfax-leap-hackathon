@@ -52,9 +52,11 @@ class OrderSerializer(serializers.ModelSerializer):
 
 	def get_current_bin(self, obj):
 		if obj.bag_id:
-			bin_id = BinBagMapping.objects.filter(bag_id=obj.bag_id, active=1).first().bin_id
-			current_bin = Bin.objects.get(id=bin_id)
-			return current_bin.get_bin_category_display() + "-" +self.get_hub_name(self, current_bin.bin_origin_hub).upper()[:3] + "-" + self.get_hub_name(self, current_bin.bin_destination_hub).upper()[:3]
+			mapping = BinBagMapping.objects.filter(bag_id=obj.bag_id, active=1).first()
+			if mapping :
+				bin_id = mapping.bin_id
+				current_bin = Bin.objects.get(id=bin_id)
+				return current_bin.get_bin_category_display() + "-" +self.get_hub_name(self, current_bin.bin_origin_hub).upper()[:3] + "-" + self.get_hub_name(self, current_bin.bin_destination_hub).upper()[:3]
 		return None
 
 	class Meta:

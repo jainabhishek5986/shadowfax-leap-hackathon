@@ -73,16 +73,13 @@ def create_bin_bag_mapping(bag_id, bin_id):
 		return False
 
 def allocate_bin_to_bag(bag_id, current_hub_id):
-	# import pdb; pdb.set_trace()
 	bag = Bag.objects.get(id=bag_id)
 	inactivate_current_mapping(bag.id)
 	random_order = Order.objects.filter(bag_id = bag_id).last()
-	# route_list = get_route_for_order(random_order)
 	next_hub_location = get_next_destination(random_order, current_hub_id)
-	current_bin , created = Bin.objects.get_or_create(bin_origin_hub = current_hub_id, bin_destination_hub=next_hub_location, current_capacity = 0)
+	current_bin , created = Bin.objects.get_or_create(bin_origin_hub = current_hub_id, bin_destination_hub=next_hub_location)
 	if created:
 		current_bin.bin_type = get_bin_type(current_bin, current_hub_id, next_hub_location)
-	# current_bin.current_capacity = get_current_capacity_bin()
 	success = create_bin_bag_mapping(bag_id, current_bin.id)
 	if success:
 		print("LOGGING ==== Bag Bin Mapping Created")
@@ -98,7 +95,7 @@ def update_weight_after_bag_transit(bag):
 	if mapping:
 		bin_id = mapping[0].bin_id
 		current_bin = Bin.objects.get(id=bin_id)
-		current_bin.weight -= bag.weight
+		current_bin.current_capacity -= bag.weight
 		current_bin.save()
 
 

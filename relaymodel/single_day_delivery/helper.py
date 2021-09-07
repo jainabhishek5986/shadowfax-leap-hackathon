@@ -6,6 +6,11 @@ import random
 from django.db import transaction
 import logging
 
+def get_order_details(order_number):
+	order = Order.objects.get(order_number= order_number)
+	serialized_data = OrderSerializer(order)
+	return serialized_data.data
+
 def get_order_tracking_details(order_number):
 	order = Order.objects.get(order_number = order_number)
 	tracking_details = Tracking.objects.filter(order_id=order.id).order_by('-id')
@@ -138,7 +143,8 @@ def mark_bag_transit(bag_code):
 			mark_orders_transit_with_bag(bag)
 			serialized_data = BagSerializer(bag)
 			return True, serialized_data.data
-		except:
+		except Exception as e:
+			print(str(e))
 			return False, None
 
 def mark_orders_received_with_bag(bag_id, current_hub_id):
@@ -163,13 +169,12 @@ def create_society_bag_for_order(order):
 	print("LOGGING ==== LM Bag - {} created for order {}".format(bag_code, order.order_number))
 
 def sort_bag_at_destination_hub(bag):
-	# bag = Bag.objects.get(code=bag_code)
 	orders = Order.objects.filter(bag_id=bag.id)
 	for order in orders:
 		create_society_bag_for_order(order)
 	bag.to_closed()
 	bag.save()
-	print("LOGGING ==== Bag - {} marked Closed".format(bag_code))
+	print("LOGGING ==== Bag - {} marked Closed".format(bag.code))
 
 def mark_bag_received(bag_code, current_hub_id):
 	with transaction.atomic():
@@ -185,7 +190,8 @@ def mark_bag_received(bag_code, current_hub_id):
 				return False, None
 			serialized_data = BagSerializer(bag)
 			return True, serialized_data.data
-		except:
+		except Exception as e:
+			print(str(e))
 			return False, None
 
 def get_shop_partner(order):

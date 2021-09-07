@@ -32,6 +32,14 @@ class OrderCreation(APIView):
 		return Response({"message": "Success", "data": orders_data.data}, status=status.HTTP_200_OK)
 
 class SellerReceive(APIView):
+	def get(self, request):
+		order_number = request.GET.get('order_number', None)
+
+		if not order_number:
+			return Response({"message": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
+
+		data = helper.get_order_details(order_number)
+		return Response({"message": "Order Received", "data": data}, status=status.HTTP_200_OK)
 	def post(self, request):
 		order_number = request.data.get('order_number', None)
 
@@ -40,7 +48,7 @@ class SellerReceive(APIView):
 
 		success, data = helper.receive_order_at_seller(order_number)
 		if success:
-			return Response({"message": "Order Received/Accepted By Seller", "data": data}, status=status.HTTP_200_OK)
+			return Response({"message": "Order Accepted By Seller", "data": data}, status=status.HTTP_200_OK)
 		return Response({"message": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
 
 class OrderTransit(APIView):

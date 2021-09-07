@@ -141,7 +141,7 @@ class Bin(BaseModel):
 	bin_category = models.IntegerField(choices=bin_type_choices, default=MINOR_TO_MAJOR)
 	bin_origin_hub = models.IntegerField(null=True, blank=True)
 	bin_destination_hub = models.IntegerField(null=True, blank=True)
-	current_capacity = models.FloatField(default=0, null=True)
+	current_capacity = models.FloatField(default=0.0, null=True, blank=True)
 
 	def get_hub_name(self, hub_id):
 		return Hub.objects.get(id=hub_id).name
@@ -197,13 +197,13 @@ class Bag(BaseModel):
 	@transition(field=status, source=[NEW, RECEIVED], target=IN_TRANSIT)
 	def to_transit(self):
 		from .tasks import update_weight_after_bag_transit
-		update_weight_after_bag_transit(self.id)
+		update_weight_after_bag_transit(self)
 
 	@transition(field=status, source=[IN_TRANSIT], target=RECEIVED)
 	def to_received(self, current_hub_id):
 		from .tasks import allocate_bin_to_bag
 		self.current_hub_id = current_hub_id
-		allocate_bin_to_bag(self, current_hub_id)
+		allocate_bin_to_bag(self.id, current_hub_id)
 
 	@transition(field=status, source=[RECEIVED], target=CLOSED)
 	def to_closed(self):
@@ -256,7 +256,6 @@ class Order(BaseModel):
 		self.partner_id = None
 		self.partner_type = None 
 		from .tasks import allocate_bin_to_bag
-		import pdb ; pdb.set_trace()
 		allocate_bin_to_bag(self.bag_id, self.current_hub_id)
 
 	@transition(field=order_status, source=RECEIVED_AT_HUB, target=OFD)
