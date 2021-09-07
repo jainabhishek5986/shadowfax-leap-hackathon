@@ -1,5 +1,6 @@
 from .models import *
 from .serializers import *
+from .tasks import *
 import string
 import random
 from django.db import transaction
@@ -17,8 +18,9 @@ def create_order(order_details, count):
 		order_number = "ODR-" + ''.join(random.choices(string.ascii_uppercase + string.digits, k = 7))
 		society_id = order_details.get("society_id", None)
 		seller_id = order_details.get("seller_id", None)
+		weight = order_details.get("weight", 0)
 		current_hub_id = SellerShops.objects.get(id=seller_id).hub_id
-		order = Order.objects.create(order_number=order_number, society_id=society_id, seller_shop_id=seller_id, current_hub_id=current_hub_id)
+		order = Order.objects.create(order_number=order_number, society_id=society_id, seller_shop_id=seller_id, current_hub_id=current_hub_id, weight = weight)
 		current_orders.append(order)
 		count-=1 
 
@@ -43,10 +45,11 @@ def generate_random_order(count):
 def create_bag_for_order(order_number):
 	order = Order.objects.get(order_number= order_number)
 	bag_code = "BAG-" + ''.join(random.choices(string.ascii_uppercase + string.digits, k = 5))
-	bag, _ = Bag.objects.get_or_create(code = bag_code, origin=order.seller_shop.hub_id, destination= order.society.hub_id, destination_type =1, status=0)
-	bag.save()
+	bag, _ = Bag.objects.get_or_create(code=bag_code, origin=order.seller_shop.hub_id, destination= order.society.hub_id, destination_type =1, status=0)
 	order.bag_id = bag.id
 	order.save()
+	# bag.weight = update_weight_capacity_bag(bag)
+	bag.save()
 	print("LOGGING ==== Order - {} added to Bag - {}".format(order_number, bag_code))
 
 def receive_order_at_seller(order_number):
@@ -163,7 +166,7 @@ def mark_bag_received(bag_code, current_hub_id):
 	with transaction.atomic():
 		try:
 			bag = Bag.objects.get(code=bag_code)
-			bag.to_received()
+			bag.to_received(current_hub_id=current_hub_id)
 			bag.save()
 			print("LOGGING ==== Bag - {} marked received at {} hub".format(bag_code, Hub.objects.get(id=current_hub_id).name))
 			success = mark_orders_received_with_bag(bag.id, current_hub_id)
