@@ -45,7 +45,8 @@ def generate_random_order(count):
 def create_bag_for_order(order_number):
 	order = Order.objects.get(order_number= order_number)
 	bag_code = "BAG-" + ''.join(random.choices(string.ascii_uppercase + string.digits, k = 5))
-	bag, _ = Bag.objects.get_or_create(code=bag_code, origin=order.seller_shop.hub_id, destination= order.society.hub_id, destination_type =1, status=0)
+	bag, _ = Bag.objects.get_or_create(origin=order.seller_shop.hub_id, destination= order.society.hub_id, destination_type =1, status=0)
+	bag.code = bag_code
 	order.bag_id = bag.id
 	order.save()
 	# bag.weight = update_weight_capacity_bag(bag)
@@ -67,16 +68,22 @@ def receive_order_at_seller(order_number):
 def get_delivery_partner(order):
 	return random.choice(list(User.objects.filter(user_type = User.DELIVERY_PARTNER)))
 
+def get_shop_partner(order):
+	return random.choice(list(User.objects.filter(user_type = User.SHOP_PARTNER, id=order.seller_shop_id)))
+
 def mark_order_transit_from_seller(order_number, partner_required):
 	try:
 		order = Order.objects.get(order_number=order_number)
+		partner_details = {}
 		if partner_required:
-			partner_details = {}
 			partner = get_delivery_partner(order)
 			partner_details["partner_id"] = partner.id
 			partner_details["partner_type"] = User.DELIVERY_PARTNER
 			print("LOGGING ==== Delivery Partner Partner - {} marked ofd".format(partner.name))
-
+		else:
+			partner = get_shop_partner(order)
+			partner_details["partner_id"] = partner.id
+			partner_details["partner_type"] = User.SHOP_PARTNER
 		order.to_transit(partner_details)
 		order.save()
 		print("LOGGING ==== Order - {} marked Transit By Seller".format(order_number))
@@ -95,7 +102,8 @@ def mark_order_received_at_hub(order_number):
 			print("LOGGING ==== Order - {} marked Received at Seller Hub".format(order_number))
 			serialized_data = OrderSerializer(order)
 			return True, serialized_data.data
-		except:
+		except Exception as e:
+			# print(str(e))
 			return False, None
 
 

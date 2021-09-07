@@ -141,14 +141,20 @@ class Bin(BaseModel):
 	bin_category = models.IntegerField(choices=bin_type_choices, default=MINOR_TO_MAJOR)
 	bin_origin_hub = models.IntegerField(null=True, blank=True)
 	bin_destination_hub = models.IntegerField(null=True, blank=True)
-	current_capacity = models.IntegerField(default=0)
+	current_capacity = models.FloatField(default=0, null=True)
+
+	def get_hub_name(self, hub_id):
+		return Hub.objects.get(id=hub_id).name
+
+	def __str__(self):
+		return self.get_bin_category_display() + get_hub_name(bin_origin_hub) + "to" + get_hub_name(bin_destination_hub)
 
 	class Meta:
 		unique_together = ('bin_origin_hub', 'bin_destination_hub')
 
 	def save(self, *args, **kwargs):
-		from .tasks import update_current_capacity_bin
-		update_current_capacity_bin(self)
+		from .tasks import get_current_capacity_bin
+		self.current_capacity = get_current_capacity_bin(self)
 		super(Bin, self).save(*args, **kwargs)
 
 class Bag(BaseModel):
@@ -190,7 +196,8 @@ class Bag(BaseModel):
 
 	@transition(field=status, source=[NEW, RECEIVED], target=IN_TRANSIT)
 	def to_transit(self):
-		pass
+		from .tasks import update_weight_after_bag_transit
+		update_weight_after_bag_transit(self.id)
 
 	@transition(field=status, source=[IN_TRANSIT], target=RECEIVED)
 	def to_received(self, current_hub_id):
@@ -241,13 +248,15 @@ class Order(BaseModel):
 
 	@transition(field=order_status, source=[SELLER_RECEIVED, RECEIVED_AT_HUB], target=IN_TRANSIT)
 	def to_transit(self, partner_details={}):
-		partner_id = partner_details.get("partner_id", None)
-		partner_type = partner_details.get("partner_type", None)
+		self.partner_id = partner_details.get("partner_id", None)
+		self.partner_type = partner_details.get("partner_type", None)
 
 	@transition(field=order_status, source=[IN_TRANSIT], target=RECEIVED_AT_HUB)
 	def to_received_at_hub(self):
 		self.partner_id = None
 		self.partner_type = None 
+		from .tasks import allocate_bin_to_bag
+		allocate_bin_to_bag(self.bag_id, self.current_hub_id)
 
 	@transition(field=order_status, source=RECEIVED_AT_HUB, target=OFD)
 	def to_ofd(self, partner_details={}):
@@ -255,8 +264,8 @@ class Order(BaseModel):
 
 	@transition(field=order_status, source=OFD, target=DELIVERED)
 	def to_delivered(self):
-		partner_id = partner_details.get("partner_id", None)
-		partner_type = partner_details.get("partner_type", None)
+		self.partner_id = partner_details.get("partner_id", None)
+		self.partner_type = partner_details.get("partner_type", None)
 
 	def get_status_display(self):
 		for status in self.status_choices:

@@ -22,10 +22,13 @@ class OrderSerializer(serializers.ModelSerializer):
 	order_status = serializers.SerializerMethodField()
 	society_name = serializers.SerializerMethodField()
 	seller_name = serializers.SerializerMethodField()
+	partner_name = serializers.SerializerMethodField()
+	current_bin = serializers.SerializerMethodField()
+	# hub_name = serializers.SerializerMethodField()
 
 	def get_bag_code(self, obj):
 		if obj.bag_id:
-			return Bag.objects.get(id=bag_id).code
+			return Bag.objects.get(id=obj.bag_id).code
 		return None
 
 	def get_order_status(self, obj):
@@ -40,14 +43,23 @@ class OrderSerializer(serializers.ModelSerializer):
 	def get_partner_name(self, obj):
 		if obj.partner_id:
 			try:
-				partner_name = User.objects.get(id = partner_id).name
+				partner_name = User.objects.get(id = obj.partner_id).name
 				return partner_name
 			except:
 				return None
+	def get_hub_name(self, obj, hub_id):
+		return Hub.objects.get(id=hub_id).name
+
+	def get_current_bin(self, obj):
+		if obj.bag_id:
+			bin_id = BinBagMapping.objects.filter(bag_id=obj.bag_id, active=1).first().bin_id
+			current_bin = Bin.objects.get(id=bin_id)
+			return current_bin.get_bin_category_display() + "-" +self.get_hub_name(self, current_bin.bin_origin_hub).upper()[:3] + "-" + self.get_hub_name(self, current_bin.bin_destination_hub).upper()[:3]
+		return None
 
 	class Meta:
 		model = Order
-		fields = ('order_number', 'bag_code', 'order_status', 'society_name', 'seller_name', 'partner_id', 'partner_name', 'weight')
+		fields = ('order_number', 'bag_code', 'order_status', 'society_name', 'seller_name', 'partner_id', 'partner_name', 'weight', 'current_bin')
 
 class BagSerializer(serializers.ModelSerializer):
 
