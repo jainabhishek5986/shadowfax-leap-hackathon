@@ -15,23 +15,23 @@ def get_route_for_order(order):
 	route_list.append(order.society.hub_id)
 
 
-def get_next_destination(order, current_hub) :
+def get_next_destination_hub(order, current_hub) :
 	if current_hub == order.seller_shop.hub_id :
 		if order.seller_shop.hub.major_hub :
-			return order.seller_shop.hub.major_hub
+			return order.seller_shop.hub.major_hub_id
 		else:
 			if order.society.hub.major_hub:
-				return order.society.hub.major_hub
+				return order.society.hub.major_hub_id
 			else:
 				return order.society.hub_id
 	
-	elif current_hub == order.seller_shop.hub.major_hub :
+	elif current_hub == order.seller_shop.hub.major_hub_id :
 		if order.society.hub.major_hub:
-			return order.society.hub.major_hub
+			return order.society.hub.major_hub_id
 		else:
 			return order.society.hub_id
 
-	elif current_hub == order.society.hub.major_hub:
+	elif current_hub == order.society.hub.major_hub_id:
 		return order.society.hub_id
 	else : 
 		return None 
@@ -74,20 +74,20 @@ def create_bin_bag_mapping(bag_id, bin_id):
 
 def allocate_bin_to_bag(bag_id, current_hub_id):
 	bag = Bag.objects.get(id=bag_id)
-	inactivate_current_mapping(bag.id)
-	random_order = Order.objects.filter(bag_id = bag_id).last()
-	next_hub_location = get_next_destination(random_order, current_hub_id)
-	current_bin , created = Bin.objects.get_or_create(bin_origin_hub = current_hub_id, bin_destination_hub=next_hub_location)
-	if created:
-		current_bin.bin_type = get_bin_type(current_bin, current_hub_id, next_hub_location)
-	success = create_bin_bag_mapping(bag_id, current_bin.id)
-	if success:
-		print("LOGGING ==== Bag Bin Mapping Created")
-		weight = get_current_capacity_bin(current_bin)
-		current_bin.current_capacity = weight
-		current_bin.save()
-	else:
-		print("LOGGING ==== Failed : Bag Bin Mapping Creation")
+	if current_hub_id != bag.destination:
+		random_order = Order.objects.filter(bag_id = bag_id).last()
+		next_hub_location = get_next_destination_hub(random_order, current_hub_id)
+		current_bin , created = Bin.objects.get_or_create(bin_origin_hub = current_hub_id, bin_destination_hub=next_hub_location)
+		if created:
+			current_bin.bin_type = get_bin_type(current_bin, current_hub_id, next_hub_location)
+		success = create_bin_bag_mapping(bag_id, current_bin.id)
+		if success:
+			print("LOGGING ==== Bag Bin Mapping Created")
+			weight = get_current_capacity_bin(current_bin)
+			current_bin.current_capacity = weight
+			current_bin.save()
+		else:
+			print("LOGGING ==== Failed : Bag Bin Mapping Creation")
 
 
 def update_weight_after_bag_transit(bag):

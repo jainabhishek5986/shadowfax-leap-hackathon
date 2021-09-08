@@ -77,10 +77,11 @@ class HubReceive(APIView):
 class BagTransit(APIView):
 	def post(self, request):
 		bag_code = request.data.get('bag_code', None)
+		vehicle_number = request.data.get('vehicle_number', None)
 		if not bag_code:
 			return Response({"message": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
 
-		success, data = helper.mark_bag_transit(bag_code)
+		success, data = helper.mark_bag_transit(bag_code, vehicle_number)
 		if success:
 			return Response({"message": "Success", "data": data}, status=status.HTTP_200_OK)
 		return Response({"message": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
@@ -89,10 +90,11 @@ class BagReceive(APIView):
 	def post(self, request):
 		bag_code = request.data.get('bag_code', None)
 		hub_id = request.data.get('hub_id', None)
+		vehicle_number = request.data.get('vehicle_number', None)
 		if not bag_code:
 			return Response({"message": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
 
-		success, data = helper.mark_bag_received(bag_code, hub_id)
+		success, data = helper.mark_bag_received(bag_code, hub_id, vehicle_number)
 		if success:
 			return Response({"message": "Success", "data": data}, status=status.HTTP_200_OK)
 		return Response({"message": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)

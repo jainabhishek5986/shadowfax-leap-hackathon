@@ -50,10 +50,10 @@ class User(BaseModel):
 	name = models.CharField(max_length=50)
 	user_type = models.IntegerField(choices=user_type_choices, null=True, blank=True)
 	location_id = models.IntegerField(null=True, blank=True)
-	address = models.CharField(max_length=50, null=True, blank=True)
+	address = models.CharField(max_length=100, null=True, blank=True)
 	latitude = models.FloatField(null=True, blank=True)
 	longitude = models.FloatField(null=True, blank=True)
-	phone_number = models.IntegerField(max_length=10, null=True, blank=True, unique=True)
+	phone_number = models.IntegerField(max_length=10, null=True, blank=True)
 
 	def __str__(self):
 		return self.name
@@ -72,37 +72,39 @@ class Hub(BaseModel):
 	latitude = models.FloatField(null=True, blank=True)
 	longitude = models.FloatField(null=True, blank=True)
 	major_hub = models.ForeignKey("Hub", on_delete=models.CASCADE, null=True, blank=True)
+	pincode = models.IntegerField(max_length=6, null=True, blank=True)
 
 	def __str__(self):
 		return self.name
 
 class SellerShops(BaseModel):
-	name = models.CharField(max_length=50, unique=True)
+	name = models.CharField(max_length=50, unique=False)
 	contact = models.CharField(max_length=20, null=False)
-	address = models.CharField(max_length=50, null=True, blank=True)
+	address = models.CharField(max_length=100, null=True, blank=True)
 	latitude = models.FloatField(null=True, blank=True)
 	longitude = models.FloatField(null=True, blank=True)
 	partner_id = models.IntegerField(null=True, blank=True)
 	hub = models.ForeignKey(Hub, on_delete=models.CASCADE)
+	pincode = models.IntegerField(max_length=6, null=True, blank=True)
 
 	def __str__(self):
 		return self.name
 
 class Society(BaseModel):
 	name = models.CharField(max_length=50, unique=True)
-	address = models.CharField(max_length=50, null=True, blank=True)
+	address = models.CharField(max_length=100, null=True, blank=True)
 	latitude = models.FloatField(null=True, blank=True)
 	longitude = models.FloatField(null=True, blank=True)
 	mygate_id = models.IntegerField(null=True, blank=True)
 	partner_id = models.IntegerField(null=True, blank=True)
 	hub = models.ForeignKey(Hub, on_delete=models.CASCADE)
+	pincode = models.IntegerField(max_length=6, null=True, blank=True)
 
 	def __str__(self):
 		return self.name
 
 class Vehicle(BaseModel):
 	partner = models.ForeignKey(User, on_delete=models.CASCADE)
-	#per km cost
 	cost = models.IntegerField(null=True, blank=True)
 	filling_time = models.IntegerField(null=True, blank=True)
 	capacity = models.IntegerField(null=True, blank=True)
@@ -110,14 +112,19 @@ class Vehicle(BaseModel):
 	current_hub_id = models.IntegerField(null=False)
 
 	def __str__(self):
-		return self.partner.name
+		return self.vehicle_number
 
 class VehicleTransitDetails(BaseModel):
-	vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
-	transit_time = models.DateTimeField(editable=False)
-	received_time = models.DateTimeField(editable=False)
+	vehicle_number = models.CharField(max_length=20)
+	transit_time = models.DateTimeField(editable=False, null=True)
+	received_time = models.DateTimeField(editable=False, null=True)
 	origin = models.IntegerField(null=True, blank=True)
 	destination = models.IntegerField(null=True, blank=True)
+
+class VehicleBagMapping(BaseModel):
+	bag_code = models.CharField(max_length=10)
+	vehicle_number = models.CharField(max_length=20)
+	status = models.BooleanField(default=True)
 
 class BinBagMapping(BaseModel):
 	bin_id = models.IntegerField(null=False)
@@ -147,7 +154,7 @@ class Bin(BaseModel):
 		return Hub.objects.get(id=hub_id).name
 
 	def __str__(self):
-		return self.get_bin_category_display() + get_hub_name(bin_origin_hub) + "to" + get_hub_name(bin_destination_hub)
+		return self.get_bin_category_display() + self.get_hub_name(self.bin_origin_hub) + "to" + self.get_hub_name(self.bin_destination_hub)
 
 	class Meta:
 		unique_together = ('bin_origin_hub', 'bin_destination_hub')
@@ -201,8 +208,9 @@ class Bag(BaseModel):
 
 	@transition(field=status, source=[IN_TRANSIT], target=RECEIVED)
 	def to_received(self, current_hub_id):
-		from .tasks import allocate_bin_to_bag
+		from .tasks import allocate_bin_to_bag, inactivate_current_mapping
 		self.current_hub_id = current_hub_id
+		inactivate_current_mapping(self.id)
 		allocate_bin_to_bag(self.id, current_hub_id)
 
 	@transition(field=status, source=[RECEIVED], target=CLOSED)
@@ -252,20 +260,22 @@ class Order(BaseModel):
 		self.partner_type = partner_details.get("partner_type", None)
 
 	@transition(field=order_status, source=[IN_TRANSIT], target=RECEIVED_AT_HUB)
-	def to_received_at_hub(self):
+	def to_received_at_hub(self, bag_receive=False):
 		self.partner_id = None
 		self.partner_type = None 
 		from .tasks import allocate_bin_to_bag
-		allocate_bin_to_bag(self.bag_id, self.current_hub_id)
+		if not bag_receive:
+			allocate_bin_to_bag(self.bag_id, self.current_hub_id)
 
 	@transition(field=order_status, source=RECEIVED_AT_HUB, target=OFD)
 	def to_ofd(self, partner_details={}):
+		self.partner_id = partner_details.get("partner_id", None)
+		self.partner_type = partner_details.get("partner_type", None)
 		pass
 
 	@transition(field=order_status, source=OFD, target=DELIVERED)
 	def to_delivered(self):
-		self.partner_id = partner_details.get("partner_id", None)
-		self.partner_type = partner_details.get("partner_type", None)
+		pass
 
 	def get_status_display(self):
 		for status in self.status_choices:
