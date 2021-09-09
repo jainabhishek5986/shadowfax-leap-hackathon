@@ -122,10 +122,20 @@ class BagSerializer(serializers.ModelSerializer):
 			return vehicles
 		return None
 
-
 	class Meta:
 		model = Bag
 		fields = ('code', 'destination_name', 'bag_type', 'weight', 'origin_name', 'vehicle_numbers', 'current_hub_id', 'current_bin')
 
 
+class SellerShopSerializer(serializers.ModelSerializer):
+	
+	class Meta:
+		model = SellerShops
+		fields = ('name', 'id', 'address', 'pincode', 'partner_id')
 
+
+class HubSerializer(serializers.ModelSerializer):
+	
+	class Meta:
+		model = Hub
+		fields = ('name', 'hub_type', 'id')

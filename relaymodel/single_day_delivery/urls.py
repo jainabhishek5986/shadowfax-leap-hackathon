@@ -10,10 +10,12 @@ urlpatterns = [
     url(r'^order_creation/$', views.OrderCreation.as_view(), name='order_creation'),
     url(r'^order_society/$', views.OrderBySociety.as_view(), name='orders_society'),
     #seller
+    url(r'^seller/all/$', views.SellerAll.as_view(), name='seller_all'),
     url(r'^seller/receive/$', views.SellerReceive.as_view(), name='seller_receive'),
     url(r'^seller/orders/$', views.OrderDetailsSeller.as_view(), name='order_seller'),
     url(r'^order/transit/$', views.OrderTransit.as_view(), name='order_transit'),
     #hub
+    url(r'^hub/all/$', views.HubAll.as_view(), name='hub_all'),
     url(r'^hub/receive/$', views.HubReceive.as_view(), name='hub_receive'),
     url(r'^bag/transit/$', views.BagTransit.as_view(), name='bag_transit'),
     url(r'^bag/receive/$', views.BagReceive.as_view(), name='bag_receive'),
