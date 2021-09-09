@@ -15,7 +15,7 @@ import pymysql
 pymysql.install_as_MySQLdb()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # Quick-start development settings - unsuitable for production
@@ -31,14 +31,13 @@ ALLOWED_HOSTS = ['*', 'sonicbackend.herokuapp.com']
 
 # Application definition
 
-STATIC_ROOT = "app-root/repo/wsgi/static"
-
+SSTATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
 
+# Extra places for collectstatic to find static files.
 STATICFILES_DIRS = (
-    ('assets', 'app-root/repo/wsgi/openshift/static'),
-
-    )
+    os.path.join(BASE_DIR, 'static'),
+)
 
 INSTALLED_APPS = [
     'django.contrib.admin',
