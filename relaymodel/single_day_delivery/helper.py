@@ -214,7 +214,9 @@ def mark_bag_received(bag_code, current_hub_id, vehicle_number):
 			mark_orders_received_with_bag(bag.id, current_hub_id)
 			mark_vehicle_bag_received(bag_code, vehicle_number, current_hub_id)
 			if current_hub_id == bag.destination:
-				sort_bag_at_destination_hub(bag)
+				bag.bag_type=Bag.SOCIETY
+				bag.save()
+			# 	sort_bag_at_destination_hub(bag)
 			serialized_data = BagSerializer(bag)
 			return True, serialized_data.data
 		except Exception as e:
@@ -260,3 +262,31 @@ def mark_order_delivered(order_number):
 	except Exception as e:
 		print(str(e))
 		return False, None
+
+class HubDashboardHelper(object):
+	def __init__(self, hub_id):
+		self.hub_id = hub_id
+	
+	def get_order_to_be_received(self):
+		orders = Order.objects.filter(seller_shop__hub_id=self.hub_id, bag_id=None)
+		serialized_data = OrderSerializer(orders, many=True)
+		return serialized_data.data
+
+	def get_bags_to_be_received(self):
+		vehicle_numbers = list(VehicleTransitDetails.objects.filter(destination=self.hub_id, received_time=None).values_list('vehicle_number', flat=True).distinct())
+		bag_codes = list(VehicleBagMapping.objects.filter(vehicle_number__in=vehicle_numbers).values_list('bag_code', flat=True).distinct())
+		bags = Bag.objects.filter(code__in = bag_codes)
+		serialized_data = BagSerializer(bags, many=True)
+		return serialized_data.data
+
+	def get_bags_to_transit(self):
+		bags = Bag.objects.filter(current_hub_id = self.hub_id, status=Bag.RECEIVED)
+		serialized_data = BagSerializer(bags, many=True)
+		return serialized_data.data
+
+	def get_bags_to_ofd(self):
+		bags = Bag.objects.filter(destination = self.hub_id, status=Bag.RECEIVED)
+		serialized_data = BagSerializer(bags, many=True)
+		return serialized_data.data
+
+

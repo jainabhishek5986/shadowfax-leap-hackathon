@@ -122,3 +122,21 @@ class OrderDelivered(APIView):
 		if success:
 			return Response({"message": "Success", "data": data}, status=status.HTTP_200_OK)
 		return Response({"message": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
+
+class HubDashboard(APIView):
+	def get(self, request):
+		hub_id = request.GET.get('hub_id', None)
+
+		if not hub_id:
+			return Response({"message": "Invalid hub_id"}, status=status.HTTP_400_BAD_REQUEST)
+		dashboard_helper = helper.HubDashboardHelper(hub_id)
+		data_dict = {}
+
+		data_dict["orders_to_be_received"] = dashboard_helper.get_order_to_be_received()
+		data_dict["bags_to_be_received"] = dashboard_helper.get_bags_to_be_received()
+		data_dict["bags_to_transit"] = dashboard_helper.get_bags_to_transit()
+		data_dict["bags_to_ofd"] = dashboard_helper.get_bags_to_ofd()
+
+		return Response({"message": "Success", "data": data_dict}, status=status.HTTP_200_OK)
+
+
