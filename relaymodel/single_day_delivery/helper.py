@@ -27,6 +27,16 @@ def get_order_from_seller(seller_shop_id):
 	serialized_data = OrderSerializer(orders, many = True)
 	return serialized_data.data
 
+def get_all_sellers():
+	sellers_shops = SellerShops.objects.filter().all()
+	serialized_data = SellerShopSerializer(sellers_shops, many = True)
+	return serialized_data.data
+
+def get_all_hubs():
+	hubs = Hub.objects.filter().all()
+	serialized_data = HubSerializer(hubs, many = True)
+	return serialized_data.data
+
 def create_order(order_details, count):
 	current_orders = []
 	while(count > 0):

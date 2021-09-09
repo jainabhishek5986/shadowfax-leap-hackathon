@@ -36,6 +36,16 @@ class OrderDetailsSeller(APIView):
 			return Response({"message": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
 		seller_orders = helper.get_order_from_seller(seller_shop_id)
 		return Response({"message": "Success", "data" : seller_orders}, status=status.HTTP_200_OK)
+
+class SellerAll(APIView):
+	def get(self, request):
+		sellers_all = helper.get_all_sellers()
+		return Response({"message": "Success", "data" : sellers_all}, status=status.HTTP_200_OK)
+
+class HubAll(APIView):
+	def get(self, request):
+		hubs_all = helper.get_all_hubs()
+		return Response({"message": "Success", "data" : hubs_all}, status=status.HTTP_200_OK)
 		
 class OrderCreation(APIView):
 	def post(self, request):
