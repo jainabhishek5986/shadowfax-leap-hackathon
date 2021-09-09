@@ -1,3 +1,4 @@
+from pdb import set_trace
 from .models import *
 from .serializers import *
 from .tasks import *
@@ -72,17 +73,18 @@ def create_bag_for_order(order_number):
 	if created:
 		bag_code = "BAG-" + ''.join(random.choices(string.ascii_uppercase + string.digits, k = 5))
 		bag.code = bag_code
-	order.bag_id = bag.id
-	order.save()
+	# order.bag_id = bag.id
+	# order.save(location_name = order.seller_shop.hub.name)
 	# bag.weight = update_weight_capacity_bag(bag)
 	bag.save()
 	print("LOGGING ==== Order - {} added to Bag - {}".format(order_number, bag.code))
+	return bag.id
 
 def receive_order_at_seller(order_number):
 	try:
 		order = Order.objects.get(order_number=order_number)
 		order.to_seller_received()
-		order.save()
+		order.save(location_name = order.seller_shop.name)
 		print("LOGGING ==== Order - {} marked Seller Received".format(order_number))
 		serialized_data = OrderSerializer(order)
 		return True, serialized_data.data
@@ -110,7 +112,7 @@ def mark_order_transit_from_seller(order_number, partner_required):
 			partner_details["partner_id"] = partner.id
 			partner_details["partner_type"] = User.SHOP_PARTNER
 		order.to_transit(partner_details)
-		order.save()
+		order.save(location_name = order.seller_shop.name)
 		print("LOGGING ==== Order - {} marked Transit By Seller".format(order_number))
 		serialized_data = OrderSerializer(order)
 		return True, serialized_data.data
@@ -121,10 +123,11 @@ def mark_order_transit_from_seller(order_number, partner_required):
 def mark_order_received_at_hub(order_number):
 	with transaction.atomic():
 		try:
-			create_bag_for_order(order_number)
+			bag_id = create_bag_for_order(order_number)
 			order = Order.objects.get(order_number=order_number)
+			order.bag_id = bag_id
 			order.to_received_at_hub()
-			order.save()
+			order.save(location_name = order.seller_shop.hub.name)
 			print("LOGGING ==== Order - {} marked Received at Seller Hub".format(order_number))
 			serialized_data = OrderSerializer(order)
 			return True, serialized_data.data
@@ -146,8 +149,8 @@ def mark_orders_transit_with_bag(bag, partner_details):
 		orders = Order.objects.filter(bag_id=bag.id)
 		for order in orders:
 			order.to_transit(partner_details)
-			print("LOGGING ==== Transit Partner - {} marked ofd".format(partner.name))
-			order.save()
+			# print("LOGGING ==== Transit Partner - {} marked ofd".format(partner_details.id))
+			order.save(location_name = order.current_hub.name)
 		print("LOGGING ==== Marked all order Transit inside Bag - {}".format(bag.code))
 	except:
 		pass
@@ -186,7 +189,7 @@ def mark_orders_received_with_bag(bag_id, current_hub_id):
 		for order in orders:
 			order.to_received_at_hub(bag_receive=True)
 			order.current_hub_id = current_hub_id
-			order.save()
+			order.save(location_name = order.current_hub.name)
 			print("LOGGING ==== Order - {} marked received at {} hub with bag".format(order.order_number, Hub.objects.get(id=current_hub_id).name))
 	except:
 		pass
@@ -198,7 +201,7 @@ def create_society_bag_for_order(order):
 		bag.code = bag_code
 	bag.save()
 	order.bag_id= bag.id
-	order.save()
+	order.save(location_name = order.current_hub.name)
 	print("LOGGING ==== LM Bag - {} created for order {}".format(bag_code, order.order_number))
 
 def sort_bag_at_destination_hub(bag):

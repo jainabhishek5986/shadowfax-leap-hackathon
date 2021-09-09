@@ -16,7 +16,7 @@ class TrackingSerializer(serializers.ModelSerializer):
 
 	class Meta:
 		model = Tracking
-		fields = ('updated', 'order_number', 'order_status')
+		fields = ('updated', 'order_number', 'order_status', 'current_location_name')
 
 class OrderSerializer(serializers.ModelSerializer):
 	bag_code = serializers.SerializerMethodField()
@@ -62,12 +62,14 @@ class OrderSerializer(serializers.ModelSerializer):
 		return None
 
 	def get_next_destination(self, obj):
-		next_hub_id = get_next_destination_hub(obj, obj.current_hub_id)
-		next_hub = Hub.objects.get(id=next_hub_id)
-		return next_hub.name
+		self.next_hub_id = get_next_destination_hub(obj, obj.current_hub_id)
+		if self.next_hub_id:
+			next_hub = Hub.objects.get(id=self.next_hub_id)
+			return next_hub.name
+		return None
 
 	def get_vehicle_numbers(self, obj):
-		if obj.bag_id and self.current_bin.current_capacity > 0.85*Constants.objects.get(name="vehicle_capacity").value:
+		if obj.bag_id and self.next_hub_id and self.current_bin.current_capacity > 0.85*Constants.objects.get(name="vehicle_capacity").value:
 			vehicles = Vehicle.objects.filter(current_hub_id=obj.current_hub_id).values_list('vehicle_number', flat=True)
 			return vehicles
 		return None
@@ -93,10 +95,9 @@ class BagSerializer(serializers.ModelSerializer):
 			return society.name + " Society"
 
 	def get_bag_type(self, obj):
-		if obj.destination_type == Bag.HUB:
+		if obj.bag_type == Bag.HUB:
 			return "HUB BAG"
 		else:
-			society = Society.objects.get(id=obj.destination)
 			return "SOCIETY BAG"
 
 	def get_origin_name(self, obj):
@@ -112,12 +113,13 @@ class BagSerializer(serializers.ModelSerializer):
 			bin_id = mapping.bin_id
 			self.current_bin = Bin.objects.get(id=bin_id)
 			return self.current_bin.get_bin_category_display().upper() + "-" + self.get_hub_name(self, self.current_bin.bin_destination_hub).upper()
+		return None
 
 	def get_vehicle_numbers(self, obj):
 		if obj.status==Bag.RECEIVED:
-			self.get_current_bin(obj)
+			is_current_bin = self.get_current_bin(obj)
 			vehicles=None
-			if self.current_bin.current_capacity > 0.85*Constants.objects.get(name="vehicle_capacity").value:
+			if is_current_bin and self.current_bin.current_capacity > 0.85*Constants.objects.get(name="vehicle_capacity").value:
 				vehicles = Vehicle.objects.filter(current_hub_id=self.current_bin.bin_origin_hub).values_list('vehicle_number', flat=True)
 			return vehicles
 		return None
