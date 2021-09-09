@@ -17,6 +17,16 @@ def get_order_tracking_details(order_number):
 	serialized_data = TrackingSerializer(tracking_details, many=True)
 	return serialized_data
 
+def get_order_details_from_society(society_id):
+	orders = Order.objects.filter(society_id = society_id)
+	serialized_data = OrderSerializer(orders, many = True)
+	return serialized_data.data
+
+def get_order_from_seller(seller_shop_id):
+	orders = Order.objects.filter(seller_shop_id = seller_shop_id)
+	serialized_data = OrderSerializer(orders, many = True)
+	return serialized_data.data
+
 def create_order(order_details, count):
 	current_orders = []
 	while(count > 0):

@@ -21,6 +21,22 @@ class TrackOrder(APIView):
 		tracking_data = helper.get_order_tracking_details(order_number)
 		return Response({"message": "Success", "data": tracking_data.data}, status=status.HTTP_200_OK)
 
+class OrderBySociety(APIView):
+	def get(self, request):
+		society_id = request.GET.get('society_id', None)
+		if not society_id:
+			return Response({"message": "Invalid society_id"}, status=status.HTTP_400_BAD_REQUEST)
+		society_orders_from = helper.get_order_details_from_society(society_id)
+		return Response({"message": "Success", "data": society_orders_from}, status=status.HTTP_200_OK)
+
+class OrderDetailsSeller(APIView):
+	def get(self, request):
+		seller_shop_id = request.GET.get('seller_shop_id', None)
+		if not seller_shop_id:
+			return Response({"message": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
+		seller_orders = helper.get_order_from_seller(seller_shop_id)
+		return Response({"message": "Success", "data" : seller_orders}, status=status.HTTP_200_OK)
+		
 class OrderCreation(APIView):
 	def post(self, request):
 		order_details = request.data.get('order_details', None)
