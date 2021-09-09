@@ -303,7 +303,7 @@ class HubDashboardHelper(object):
 		return serialized_data.data
 
 	def get_bags_to_transit(self):
-		bags = Bag.objects.filter(current_hub_id = self.hub_id, status=Bag.RECEIVED)
+		bags = Bag.objects.filter(current_hub_id = self.hub_id, status__in=[Bag.NEW, Bag.RECEIVED])
 		serialized_data = BagSerializer(bags, many=True)
 		return serialized_data.data
 
