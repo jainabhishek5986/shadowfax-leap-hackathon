@@ -282,12 +282,13 @@ class Order(BaseModel):
 			if status[0]==self.order_status:
 				return status[1]
 
-	def save(self, *args, **kwargs):
+	def save(self,location_name = None, *args, **kwargs,):
 		super(Order, self).save(*args, **kwargs)
 		from .tasks import create_entry_in_tracking
-		create_entry_in_tracking(self)
+		create_entry_in_tracking(self, location_name)
 
 class Tracking(BaseModel):
 	order = models.ForeignKey(Order, on_delete=models.CASCADE)
 	status = models.IntegerField(choices=Order.status_choices)
+	current_location_name = models.CharField(null = True, blank = True, max_length= 50)
 
