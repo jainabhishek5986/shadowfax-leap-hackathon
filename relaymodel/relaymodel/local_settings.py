@@ -27,8 +27,7 @@ SECRET_KEY = 'django-insecure-t0l9@#+f6m0)ud3ahssu^^kpfem1%3oi1v$5iq0g=#q&9q4uid
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -73,6 +72,24 @@ TEMPLATES = [
         },
     },
 ]
+
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_EXPOSE_HEADERS = (
+    'Content-Type',
+    'Content-Disposition',
+    'X-additional-data',
+    'X-Source',
+)
+
+CORS_ALLOW_HEADERS = (
+    'x-requested-with',
+    'content-type',
+    'accept',
+    'origin',
+    'authorization',
+    'x-csrftoken',
+    'x-source'
+)
 
 WSGI_APPLICATION = 'relaymodel.wsgi.application'
 
