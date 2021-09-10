@@ -137,7 +137,8 @@ class BagSerializer(serializers.ModelSerializer):
 		return None
 
 	def get_next_destination(self, obj):
-		self.next_hub_id = get_next_destination_hub(obj, obj.current_hub_id)
+		order = Order.objects.filter(bag_id=obj.id).last()
+		self.next_hub_id = get_next_destination_hub(order, obj.current_hub_id)
 		if self.next_hub_id:
 			try:
 				next_hub = Hub.objects.get(id=self.next_hub_id)
