@@ -159,7 +159,7 @@ def create_vehicle_details(bag, vehicle_number):
 	vehicle_mapping.save()
 	mapping = BinBagMapping.objects.filter(bag_id=bag.id, active=1).first()
 	current_bin = Bin.objects.get(id=mapping.bin_id)
-	transit_details = VehicleTransitDetails.objects.create(origin=bag.origin, destination=current_bin.bin_destination_hub, 
+	transit_details = VehicleTransitDetails.objects.create(origin=current_bin.bin_origin_hub, destination=current_bin.bin_destination_hub, 
 		transit_time=timezone.now(), vehicle_number=vehicle_number)
 	transit_details.save()
 
