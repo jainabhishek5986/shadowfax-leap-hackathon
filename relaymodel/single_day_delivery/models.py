@@ -285,7 +285,8 @@ class Order(BaseModel):
 	def save(self,location_name = None, *args, **kwargs,):
 		super(Order, self).save(*args, **kwargs)
 		from .tasks import create_entry_in_tracking
-		create_entry_in_tracking(self, location_name)
+		if location_name:
+			create_entry_in_tracking(self, location_name)
 
 class Tracking(BaseModel):
 	order = models.ForeignKey(Order, on_delete=models.CASCADE)
