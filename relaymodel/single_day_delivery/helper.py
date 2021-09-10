@@ -124,10 +124,9 @@ def mark_order_received_at_hub(order_number):
 			bag_id = create_bag_for_order(order_number)
 			order = Order.objects.get(order_number=order_number)
 			order.bag_id = bag_id
-			print(order.seller_shop_id)
-			order.to_received_at_hub()
 			order.save(location_name = order.seller_shop.hub.name)
-			print(order.seller_shop.hub.name)
+			order.to_received_at_hub()
+			order.save()
 			print("LOGGING ==== Order - {} marked Received at Seller Hub".format(order_number))
 			serialized_data = OrderSerializer(order)
 			return True, serialized_data.data
