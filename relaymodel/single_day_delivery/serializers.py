@@ -64,8 +64,11 @@ class OrderSerializer(serializers.ModelSerializer):
 	def get_next_destination(self, obj):
 		self.next_hub_id = get_next_destination_hub(obj, obj.current_hub_id)
 		if self.next_hub_id:
-			next_hub = Hub.objects.get(id=self.next_hub_id)
-			return next_hub.name
+			try:
+				next_hub = Hub.objects.get(id=self.next_hub_id)
+				return next_hub.name
+			except:
+				pass
 		return None
 
 	def get_vehicle_numbers(self, obj):
