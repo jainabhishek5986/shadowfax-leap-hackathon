@@ -89,7 +89,6 @@ def receive_order_at_seller(order_number):
 		serialized_data = OrderSerializer(order)
 		return True, serialized_data.data
 	except Exception as e:
-		# logging.error()
 		return False, None
 
 def get_delivery_partner(order):
@@ -125,14 +124,15 @@ def mark_order_received_at_hub(order_number):
 			bag_id = create_bag_for_order(order_number)
 			order = Order.objects.get(order_number=order_number)
 			order.bag_id = bag_id
+			print(order.seller_shop_id)
 			order.to_received_at_hub()
 			order.save(location_name = order.seller_shop.hub.name)
+			print(order.seller_shop.hub.name)
 			print("LOGGING ==== Order - {} marked Received at Seller Hub".format(order_number))
 			serialized_data = OrderSerializer(order)
 			return True, serialized_data.data
 		except Exception as e:
-			print(str(e))
-			return False, None
+			return False, print(str(e))
 
 
 def get_transit_partner(vehicle_number):

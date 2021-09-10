@@ -2,8 +2,8 @@ from django.db.models import Sum
 from .models import *
 import random
 def create_entry_in_tracking(order, location_name):
-	t = Tracking.objects.create(order_id= order.id, status=order.order_status, current_location_name = location_name)
-	t.save()
+	tracking = Tracking.objects.create(order_id= order.id, status=order.order_status, current_location_name = location_name)
+	tracking.save()
 
 def get_route_for_order(order):
 	route_list = []
