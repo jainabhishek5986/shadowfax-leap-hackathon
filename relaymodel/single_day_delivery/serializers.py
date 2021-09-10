@@ -113,15 +113,16 @@ class BagSerializer(serializers.ModelSerializer):
 		if mapping :
 			bin_id = mapping.bin_id
 			self.current_bin = Bin.objects.get(id=bin_id)
-			return self.current_bin.get_bin_category_display().upper() + "-" + self.get_hub_name(self, self.current_bin.bin_destination_hub).upper()
+			return None
+			# return self.current_bin.get_bin_category_display().upper() + "-" + self.get_hub_name(self, self.current_bin.bin_destination_hub).upper()
 		return None
 
 	def get_vehicle_numbers(self, obj):
 		if obj.status==Bag.RECEIVED:
 			is_current_bin = self.get_current_bin(obj)
 			vehicles=None
-			if is_current_bin and self.current_bin.current_capacity > 0.85*Constants.objects.get(name="vehicle_capacity").value:
-				vehicles = Vehicle.objects.filter(current_hub_id=self.current_bin.bin_origin_hub).values_list('vehicle_number', flat=True)
+			# if is_current_bin and self.current_bin.current_capacity > 0.85*Constants.objects.get(name="vehicle_capacity").value:
+			# 	vehicles = Vehicle.objects.filter(current_hub_id=self.current_bin.bin_origin_hub).values_list('vehicle_number', flat=True)
 			return vehicles
 		return None
 
