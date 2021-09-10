@@ -109,7 +109,7 @@ class BagSerializer(serializers.ModelSerializer):
 		try:
 			return Hub.objects.get(id=hub_id).name
 		except:
-			return None
+			return ""
 
 	def get_current_bin(self, obj):
 		mapping = BinBagMapping.objects.filter(bag_id=obj.id, active=1).last()
