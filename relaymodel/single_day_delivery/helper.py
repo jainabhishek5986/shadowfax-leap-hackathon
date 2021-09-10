@@ -69,7 +69,7 @@ def generate_random_order(count):
 
 def create_bag_for_order(order_number):
 	order = Order.objects.get(order_number= order_number)
-	bag, created = Bag.objects.get_or_create(origin=order.seller_shop.hub_id, destination= order.society.hub_id, destination_type =1, status=0)
+	bag, created = Bag.objects.get_or_create(origin=order.seller_shop.hub_id, destination= order.society.hub_id, destination_type =1, status=0,weight =0)
 	if created:
 		bag_code = "BAG-" + ''.join(random.choices(string.ascii_uppercase + string.digits, k = 5))
 		bag.code = bag_code

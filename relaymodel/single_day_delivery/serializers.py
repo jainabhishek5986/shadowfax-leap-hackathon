@@ -76,9 +76,9 @@ class OrderSerializer(serializers.ModelSerializer):
 
 	def get_vehicle_numbers(self, obj):
 		if obj.order_status not in [obj.OFD, obj.DELIVERED]:
-			if obj.bag_id and self.next_hub_id and self.mapping and self.current_bin.current_capacity > 0.85*Constants.objects.get(name="vehicle_capacity").value:
-				vehicles = Vehicle.objects.filter(current_hub_id=obj.current_hub_id).values_list('vehicle_number', flat=True)
-				return vehicles
+			# if obj.bag_id and self.next_hub_id and self.mapping and self.current_bin.current_capacity > 0.85*Constants.objects.get(name="vehicle_capacity").value:
+			vehicles = Vehicle.objects.filter(current_hub_id=obj.current_hub_id).values_list('vehicle_number', flat=True)
+			return vehicles
 		return None
 
 	class Meta:
@@ -92,6 +92,8 @@ class BagSerializer(serializers.ModelSerializer):
 	origin_name = serializers.SerializerMethodField()
 	vehicle_numbers = serializers.SerializerMethodField()
 	current_bin = serializers.SerializerMethodField()
+	next_destination = serializers.SerializerMethodField()
+	status = serializers.SerializerMethodField()
 
 	def get_destination_name(self, obj):
 		if obj.destination_type == Bag.HUB:
@@ -128,15 +130,28 @@ class BagSerializer(serializers.ModelSerializer):
 	def get_vehicle_numbers(self, obj):
 		if obj.status==Bag.RECEIVED:
 			is_current_bin = self.get_current_bin(obj)
-			vehicles=None
-			if is_current_bin and self.current_bin.current_capacity > 0.85*Constants.objects.get(name="vehicle_capacity").value:
-				vehicles = Vehicle.objects.filter(current_hub_id=self.current_bin.bin_origin_hub).values_list('vehicle_number', flat=True)
+			# vehicles=None
+			# if is_current_bin and self.current_bin.current_capacity > 0.85*Constants.objects.get(name="vehicle_capacity").value:
+			vehicles = Vehicle.objects.filter(current_hub_id=self.current_bin.bin_origin_hub).values_list('vehicle_number', flat=True)
 			return vehicles
 		return None
 
+	def get_next_destination(self, obj):
+		self.next_hub_id = get_next_destination_hub(obj, obj.current_hub_id)
+		if self.next_hub_id:
+			try:
+				next_hub = Hub.objects.get(id=self.next_hub_id)
+				return next_hub.name
+			except:
+				pass
+		return None
+
+	def get_status(self, obj):
+		return obj.get_status_display()
+
 	class Meta:
 		model = Bag
-		fields = ('code', 'destination_name', 'bag_type', 'weight', 'origin_name', 'vehicle_numbers', 'current_hub_id', 'current_bin', 'status')
+		fields = ('code', 'destination_name', 'bag_type', 'weight', 'origin_name', 'vehicle_numbers', 'current_hub_id', 'current_bin', 'status', 'next_destination')
 
 
 
