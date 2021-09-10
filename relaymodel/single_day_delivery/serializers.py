@@ -50,7 +50,10 @@ class OrderSerializer(serializers.ModelSerializer):
 			except:
 				return None
 	def get_hub_name(self, obj, hub_id):
-		return Hub.objects.get(id=hub_id).name
+		try:
+			return Hub.objects.get(id=hub_id).name
+		except:
+			return ""
 
 	def get_current_bin(self, obj):
 		if obj.bag_id:
