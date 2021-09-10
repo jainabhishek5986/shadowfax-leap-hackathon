@@ -265,7 +265,7 @@ def mark_bag_ofd(bag_code, partner_required):
 					partner_details["partner_type"] = User.SHOP_PARTNER
 					print("LOGGING ==== Shop Partner - {} marked ofd".format(partner.name))
 				order.to_ofd(partner_details)
-				order.save()
+				order.save(location_name=order.society.hub.name)
 				print("LOGGING ==== Order - {} marked ofd".format(order.order_number))
 			print("LOGGING ==== All orders inside Bag - {} marked ofd".format(bag_code))
 			serialized_data = BagSerializer(bag)
@@ -278,7 +278,7 @@ def mark_order_delivered(order_number):
 	try:
 		order = Order.objects.get(order_number=order_number)
 		order.to_delivered()
-		order.save()
+		order.save(location_name = "Partner Delivered Order")
 		print("LOGGING ==== Order - {} marked delivered".format(order_number))
 		serialized_data = OrderSerializer(order)
 		return True, serialized_data.data
