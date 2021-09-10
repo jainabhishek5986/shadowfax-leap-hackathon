@@ -238,6 +238,7 @@ def mark_bag_received(bag_code, current_hub_id, vehicle_number):
 			mark_vehicle_bag_received(bag_code, vehicle_number, current_hub_id)
 			if current_hub_id == bag.destination:
 				bag.bag_type=Bag.SOCIETY
+				bag.to_closed()
 				bag.save()
 			# 	sort_bag_at_destination_hub(bag)
 			serialized_data = BagSerializer(bag)
@@ -250,7 +251,7 @@ def mark_bag_ofd(bag_code, partner_required):
 	with transaction.atomic():
 		try:
 			bag = Bag.objects.get(code=bag_code)
-			orders = Order.objects.filter(bag_id=bag.id)
+			orders = Order.objects.filter(bag_id=bag.id, order_status=Order.RECEIVED_AT_HUB)
 			partner_required_society_list = Constants.objects.get(name = "partner_required_list").value
 			for order in orders:
 				partner_details = {}
@@ -308,7 +309,7 @@ class HubDashboardHelper(object):
 		return serialized_data.data
 
 	def get_bags_to_ofd(self):
-		bags = Bag.objects.filter(destination = self.hub_id, status=Bag.RECEIVED)
+		bags = Bag.objects.filter(destination = self.hub_id, status__in=[Bag.NEW, Bag.RECEIVED])
 		serialized_data = BagSerializer(bags, many=True)
 		return serialized_data.data
 

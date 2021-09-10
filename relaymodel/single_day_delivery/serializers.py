@@ -69,9 +69,10 @@ class OrderSerializer(serializers.ModelSerializer):
 		return None
 
 	def get_vehicle_numbers(self, obj):
-		if obj.bag_id and self.next_hub_id and self.current_bin.current_capacity > 0.85*Constants.objects.get(name="vehicle_capacity").value:
-			vehicles = Vehicle.objects.filter(current_hub_id=obj.current_hub_id).values_list('vehicle_number', flat=True)
-			return vehicles
+		if obj.order_status not in [obj.OFD, obj.DELIVERED]:
+			if obj.bag_id and self.next_hub_id and self.current_bin.current_capacity > 0.85*Constants.objects.get(name="vehicle_capacity").value:
+				vehicles = Vehicle.objects.filter(current_hub_id=obj.current_hub_id).values_list('vehicle_number', flat=True)
+				return vehicles
 		return None
 
 	class Meta:
