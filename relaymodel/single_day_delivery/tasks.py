@@ -78,9 +78,11 @@ def allocate_bin_to_bag(bag_id, current_hub_id):
 	if current_hub_id != bag.destination:
 		random_order = Order.objects.filter(bag_id = bag_id).last()
 		next_hub_location = get_next_destination_hub(random_order, current_hub_id)
-		current_bin , created = Bin.objects.get_or_create(bin_origin_hub = current_hub_id, bin_destination_hub=next_hub_location, current_capacity = 0)
+		current_bin , created = Bin.objects.get_or_create(bin_origin_hub = current_hub_id, bin_destination_hub=next_hub_location)
 		if created:
+			current_bin.current_capacity = 0
 			current_bin.bin_type = get_bin_type(current_bin, current_hub_id, next_hub_location)
+			current_bin.save()
 		success = create_bin_bag_mapping(bag_id, current_bin.id)
 		if success:
 			print("LOGGING ==== Bag Bin Mapping Created")
