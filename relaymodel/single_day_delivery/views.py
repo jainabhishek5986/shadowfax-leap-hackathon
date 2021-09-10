@@ -33,7 +33,7 @@ class OrderDetailsSeller(APIView):
 	def get(self, request):
 		seller_shop_id = request.GET.get('seller_shop_id', None)
 		if not seller_shop_id:
-			return Response({"message": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
+			return Response({"message": "Invalid seller"}, status=status.HTTP_400_BAD_REQUEST)
 		seller_orders = helper.get_order_from_seller(seller_shop_id)
 		return Response({"message": "Success", "data" : seller_orders}, status=status.HTTP_200_OK)
 

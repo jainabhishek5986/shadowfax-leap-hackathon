@@ -95,7 +95,7 @@ def update_weight_after_bag_transit(bag):
 	if mapping:
 		bin_id = mapping[0].bin_id
 		current_bin = Bin.objects.get(id=bin_id)
-		current_bin.current_capacity -= bag.weight
+		current_bin.current_capacity =  current_bin.current_capacity - bag.weight
 		current_bin.save()
 
 

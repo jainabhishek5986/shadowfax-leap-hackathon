@@ -106,7 +106,7 @@ def mark_order_transit_from_seller(order_number, partner_required):
 			partner = get_delivery_partner(order)
 			partner_details["partner_id"] = partner.id
 			partner_details["partner_type"] = User.DELIVERY_PARTNER
-			print("LOGGING ==== Delivery Partner Partner - {} marked ofd".format(partner.name))
+			print("LOGGING ==== Delivery Partner - {} marked ofd".format(partner.name))
 		else:
 			partner = get_shop_partner(order)
 			partner_details["partner_id"] = partner.id
@@ -117,8 +117,7 @@ def mark_order_transit_from_seller(order_number, partner_required):
 		serialized_data = OrderSerializer(order)
 		return True, serialized_data.data
 	except Exception as e:
-		print(str(e))
-		return False, None
+		return False, str(e)
 
 def mark_order_received_at_hub(order_number):
 	with transaction.atomic():
