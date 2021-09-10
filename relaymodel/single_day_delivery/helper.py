@@ -69,12 +69,13 @@ def generate_random_order(count):
 
 def create_bag_for_order(order_number):
 	order = Order.objects.get(order_number= order_number)
-	bag, created = Bag.objects.get_or_create(origin=order.seller_shop.hub_id, destination= order.society.hub_id, destination_type =1, status=0,weight =0)
+	bag, created = Bag.objects.get_or_create(origin=order.seller_shop.hub_id, destination= order.society.hub_id, destination_type =1, status=0)
 	if created:
 		bag_code = "BAG-" + ''.join(random.choices(string.ascii_uppercase + string.digits, k = 5))
 		bag.code = bag_code
-	# order.bag_id = bag.id
-	# order.save(location_name = order.seller_shop.hub.name)
+		bag.weight = 0
+	order.bag_id = bag.id
+	order.save()
 	# bag.weight = update_weight_capacity_bag(bag)
 	bag.current_hub_id = order.seller_shop.hub_id
 	bag.save()
@@ -124,10 +125,10 @@ def mark_order_received_at_hub(order_number):
 		try:
 			bag_id = create_bag_for_order(order_number)
 			order = Order.objects.get(order_number=order_number)
-			order.bag_id = bag_id
-			order.save(location_name = order.seller_shop.hub.name)
+			# order.bag_id = bag_id
+			# order.save(location_name = order.seller_shop.hub.name)
 			order.to_received_at_hub()
-			order.save()
+			order.save(location_name = order.seller_shop.hub.name)
 			print("LOGGING ==== Order - {} marked Received at Seller Hub".format(order_number))
 			serialized_data = OrderSerializer(order)
 			return True, serialized_data.data
