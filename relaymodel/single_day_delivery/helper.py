@@ -76,6 +76,7 @@ def create_bag_for_order(order_number):
 	# order.bag_id = bag.id
 	# order.save(location_name = order.seller_shop.hub.name)
 	# bag.weight = update_weight_capacity_bag(bag)
+	bag.current_hub_id = order.seller_shop.hub_id
 	bag.save()
 	print("LOGGING ==== Order - {} added to Bag - {}".format(order_number, bag.code))
 	return bag.id
