@@ -291,24 +291,24 @@ class HubDashboardHelper(object):
 		self.hub_id = hub_id
 	
 	def get_order_to_be_received(self):
-		orders = Order.objects.filter(seller_shop__hub_id=self.hub_id, bag_id=None)
+		orders = Order.objects.filter(seller_shop__hub_id=self.hub_id, bag_id=None).order_by('-id')
 		serialized_data = OrderSerializer(orders, many=True)
 		return serialized_data.data
 
 	def get_bags_to_be_received(self):
 		vehicle_numbers = list(VehicleTransitDetails.objects.filter(destination=self.hub_id, received_time=None).values_list('vehicle_number', flat=True).distinct())
 		bag_codes = list(VehicleBagMapping.objects.filter(vehicle_number__in=vehicle_numbers).values_list('bag_code', flat=True).distinct())
-		bags = Bag.objects.filter(code__in = bag_codes)
+		bags = Bag.objects.filter(code__in = bag_codes).order_by('-id')
 		serialized_data = BagSerializer(bags, many=True)
 		return serialized_data.data
 
 	def get_bags_to_transit(self):
-		bags = Bag.objects.filter(current_hub_id = self.hub_id, status__in=[Bag.NEW, Bag.RECEIVED])
+		bags = Bag.objects.filter(current_hub_id = self.hub_id, status__in=[Bag.NEW, Bag.RECEIVED]).order_by('-id')
 		serialized_data = BagSerializer(bags, many=True)
 		return serialized_data.data
 
 	def get_bags_to_ofd(self):
-		bags = Bag.objects.filter(destination = self.hub_id, status__in=[Bag.NEW, Bag.RECEIVED])
+		bags = Bag.objects.filter(destination = self.hub_id, status__in=[Bag.NEW, Bag.RECEIVED]).order_by('-id')
 		serialized_data = BagSerializer(bags, many=True)
 		return serialized_data.data
 
