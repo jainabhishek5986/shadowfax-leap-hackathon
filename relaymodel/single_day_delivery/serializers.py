@@ -61,7 +61,7 @@ class OrderSerializer(serializers.ModelSerializer):
 			if self.mapping :
 				bin_id = self.mapping.bin_id
 				self.current_bin = Bin.objects.get(id=bin_id)
-				return self.current_bin.get_bin_category_display().upper() + "-" + self.get_hub_name(self, self.current_bin.bin_destination_hub).upper()
+				return self.get_hub_name(self, self.current_bin.bin_destination_hub).upper()
 		return None
 
 	def get_next_destination(self, obj):
@@ -122,7 +122,7 @@ class BagSerializer(serializers.ModelSerializer):
 		if mapping :
 			bin_id = mapping.bin_id
 			self.current_bin = Bin.objects.get(id=bin_id)
-			return self.current_bin.get_bin_category_display().upper() + "-" + self.get_hub_name(self, self.current_bin.bin_destination_hub).upper()
+			return self.get_hub_name(self, self.current_bin.bin_destination_hub).upper()
 		return None
 
 	def get_vehicle_numbers(self, obj):
