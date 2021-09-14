@@ -210,8 +210,8 @@ class Bag(BaseModel):
 	def to_received(self, current_hub_id):
 		from .tasks import allocate_bin_to_bag, inactivate_current_mapping
 		self.current_hub_id = current_hub_id
-		inactivate_current_mapping(self.id)
-		allocate_bin_to_bag(self.id, current_hub_id)
+		# inactivate_current_mapping(self.id)
+		# allocate_bin_to_bag(self.id, current_hub_id)
 
 	@transition(field=status, source=[RECEIVED], target=CLOSED)
 	def to_closed(self):

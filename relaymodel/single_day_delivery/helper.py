@@ -234,6 +234,8 @@ def mark_bag_received(bag_code, current_hub_id, vehicle_number):
 			bag.to_received(current_hub_id=current_hub_id)
 			bag.save()
 			print("LOGGING ==== Bag - {} marked received at {}".format(bag_code, Hub.objects.get(id=current_hub_id).name))
+			inactivate_current_mapping(self.id)
+			allocate_bin_to_bag(self.id, current_hub_id)
 			mark_orders_received_with_bag(bag.id, current_hub_id)
 			mark_vehicle_bag_received(bag_code, vehicle_number, current_hub_id)
 			if current_hub_id == bag.destination:
