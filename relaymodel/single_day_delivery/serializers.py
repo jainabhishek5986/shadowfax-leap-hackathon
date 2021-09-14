@@ -104,7 +104,7 @@ class BagSerializer(serializers.ModelSerializer):
 			return society.name + " Society"
 
 	def get_bag_type(self, obj):
-		if obj.bag_type == Bag.HUB:
+		if obj.destination_type == Bag.HUB:
 			return "HUB BAG"
 		else:
 			return "SOCIETY BAG"
