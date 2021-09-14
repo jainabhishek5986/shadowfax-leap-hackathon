@@ -119,7 +119,7 @@ class BagReceive(APIView):
 		vehicle_number = request.data.get('vehicle_number', None)
 		if not bag_code:
 			return Response({"message": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
-
+		hub_id = int(hub_id)
 		success, data = helper.mark_bag_received(bag_code, hub_id, vehicle_number)
 		if success:
 			return Response({"message": "Success", "data": data}, status=status.HTTP_200_OK)

@@ -132,7 +132,7 @@ class BagSerializer(serializers.ModelSerializer):
 			is_current_bin = self.get_current_bin(obj)
 			# vehicles=None
 			# if is_current_bin and self.current_bin.current_capacity > 0.85*Constants.objects.get(name="vehicle_capacity").value:
-			vehicles = Vehicle.objects.filter(current_hub_id=self.current_bin.bin_origin_hub).values_list('vehicle_number', flat=True)
+			vehicles = Vehicle.objects.filter(current_hub_id=obj.current_hub_id).values_list('vehicle_number', flat=True)
 			return vehicles
 		return None
 

@@ -35,7 +35,6 @@ def get_next_destination_hub(order, current_hub) :
 		return order.society.hub_id
 	elif current_hub == order.society.hub_id: 
 		return None 
-	return None
 			
 def get_current_capacity_bin(bin):
 	bag_ids = list(BinBagMapping.objects.filter(bin_id=bin.id).values_list('bag_id', flat=True))
