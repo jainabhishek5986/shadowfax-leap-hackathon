@@ -297,9 +297,11 @@ class HubDashboardHelper(object):
 		return serialized_data.data
 
 	def get_bags_to_be_received(self):
-		vehicle_numbers = list(VehicleTransitDetails.objects.filter(destination=self.hub_id, received_time=None).values_list('vehicle_number', flat=True).distinct())
-		bag_codes = list(VehicleBagMapping.objects.filter(vehicle_number__in=vehicle_numbers, status=True).values_list('bag_code', flat=True).distinct())
-		bags = Bag.objects.filter(code__in = bag_codes, status=Bag.IN_TRANSIT).order_by('-id')
+		bins_reaching_hub = list(Bin.objects.filter(bin_destination_hub=self.hub_id).values_list('id', flat=True))
+		bag_ids = BagBinMapping.objects.filter(bin_id__in=bins_reaching_hub).values_list('bag_id', flat=True)
+		# vehicle_numbers = list(VehicleTransitDetails.objects.filter(destination=self.hub_id, received_time=None).values_list('vehicle_number', flat=True).distinct())
+		# bag_codes = list(VehicleBagMapping.objects.filter(vehicle_number__in=vehicle_numbers, status=True).values_list('bag_code', flat=True).distinct())
+		bags = Bag.objects.filter(id__in = bag_ids, status=Bag.IN_TRANSIT).order_by('-id')
 		serialized_data = BagSerializer(bags, many=True)
 		return serialized_data.data
 
