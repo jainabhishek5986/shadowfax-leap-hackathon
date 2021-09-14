@@ -228,26 +228,25 @@ def mark_vehicle_bag_received(bag_code, vehicle_number, current_hub_id):
 		print("LOGGING ==== VehicleTransitDetails received time updated")
 
 def mark_bag_received(bag_code, current_hub_id, vehicle_number):
-	with transaction.atomic():
-		try:
-			bag = Bag.objects.get(code=bag_code)
-			bag.to_received(current_hub_id=current_hub_id)
+	try:
+		bag = Bag.objects.get(code=bag_code)
+		bag.to_received(current_hub_id=current_hub_id)
+		bag.save()
+		print("LOGGING ==== Bag - {} marked received at {}".format(bag_code, Hub.objects.get(id=current_hub_id).name))
+		inactivate_current_mapping(bag.id)
+		allocate_bin_to_bag(bag.id, current_hub_id)
+		mark_orders_received_with_bag(bag.id, current_hub_id)
+		mark_vehicle_bag_received(bag_code, vehicle_number, current_hub_id)
+		if current_hub_id == bag.destination:
+			bag.bag_type=Bag.SOCIETY
+			bag.to_closed()
 			bag.save()
-			print("LOGGING ==== Bag - {} marked received at {}".format(bag_code, Hub.objects.get(id=current_hub_id).name))
-			inactivate_current_mapping(bag.id)
-			allocate_bin_to_bag(bag.id, current_hub_id)
-			mark_orders_received_with_bag(bag.id, current_hub_id)
-			mark_vehicle_bag_received(bag_code, vehicle_number, current_hub_id)
-			if current_hub_id == bag.destination:
-				bag.bag_type=Bag.SOCIETY
-				bag.to_closed()
-				bag.save()
-			# 	sort_bag_at_destination_hub(bag)
-			serialized_data = BagSerializer(bag)
-			return True, serialized_data.data
-		except Exception as e:
-			print(str(e))
-			return False, None
+		# 	sort_bag_at_destination_hub(bag)
+		serialized_data = BagSerializer(bag)
+		return True, serialized_data.data
+	except Exception as e:
+		print(str(e))
+		return False, None
 
 def mark_bag_ofd(bag_code, partner_required):
 	with transaction.atomic():
