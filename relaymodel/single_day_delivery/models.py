@@ -260,12 +260,12 @@ class Order(BaseModel):
 		self.partner_type = partner_details.get("partner_type", None)
 
 	@transition(field=order_status, source=[IN_TRANSIT], target=RECEIVED_AT_HUB)
-	def to_received_at_hub(self, bag_receive=False):
+	def to_received_at_hub(self, bag_receive=False, hub_id=None):
 		self.partner_id = None
 		self.partner_type = None 
 		from .tasks import allocate_bin_to_bag
 		if not bag_receive:
-			allocate_bin_to_bag(self.bag_id, self.current_hub_id)
+			allocate_bin_to_bag(self.bag_id, hub_id)
 
 	@transition(field=order_status, source=RECEIVED_AT_HUB, target=OFD)
 	def to_ofd(self, partner_details={}):

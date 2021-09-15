@@ -120,14 +120,14 @@ def mark_order_transit_from_seller(order_number, partner_required):
 	except Exception as e:
 		return False, str(e)
 
-def mark_order_received_at_hub(order_number):
+def mark_order_received_at_hub(order_number, hub_id):
 	with transaction.atomic():
 		try:
 			bag_id = create_bag_for_order(order_number)
 			order = Order.objects.get(order_number=order_number)
 			# order.bag_id = bag_id
 			# order.save(location_name = order.seller_shop.hub.name)
-			order.to_received_at_hub()
+			order.to_received_at_hub(hub_id=hub_id)
 			order.save(location_name = order.seller_shop.hub.name)
 			print("LOGGING ==== Order - {} marked Received at Seller Hub".format(order_number))
 			serialized_data = OrderSerializer(order)

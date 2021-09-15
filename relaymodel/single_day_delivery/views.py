@@ -92,10 +92,11 @@ class OrderTransit(APIView):
 class HubReceive(APIView):
 	def post(self, request):
 		order_number = request.data.get('order_number', None)
+		hub_id = request.data.get('hub_id', None)
 		if not order_number:
 			return Response({"message": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
 
-		success, data = helper.mark_order_received_at_hub(order_number)
+		success, data = helper.mark_order_received_at_hub(order_number, hub_id)
 		if success:
 			return Response({"message": "Success", "data": data}, status=status.HTTP_200_OK)
 		return Response({"message": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
