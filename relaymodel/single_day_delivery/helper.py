@@ -127,6 +127,7 @@ def mark_order_received_at_hub(order_number, hub_id):
 			order = Order.objects.get(order_number=order_number)
 			# order.bag_id = bag_id
 			# order.save(location_name = order.seller_shop.hub.name)
+			order.current_hub_id = hub_id
 			order.to_received_at_hub(hub_id=hub_id)
 			order.save(location_name = order.seller_shop.hub.name)
 			print("LOGGING ==== Order - {} marked Received at Seller Hub".format(order_number))
