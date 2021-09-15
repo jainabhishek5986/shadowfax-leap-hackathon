@@ -46,7 +46,7 @@ def create_order(order_details, count):
 		seller_id = order_details.get("seller_id", None)
 		weight = order_details.get("weight", 0)
 		current_hub_id = SellerShops.objects.get(id=seller_id).hub_id
-		order = Order.objects.create(order_number=order_number, society_id=society_id, seller_shop_id=seller_id, current_hub_id=current_hub_id, weight = weight)
+		order = Order.objects.create(order_number=order_number, society_id=society_id, seller_shop_id=seller_id, weight = weight)
 		current_orders.append(order)
 		count-=1 
 

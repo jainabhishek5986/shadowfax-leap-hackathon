@@ -65,6 +65,8 @@ class OrderSerializer(serializers.ModelSerializer):
 		return None
 
 	def get_next_destination(self, obj):
+		if not obj.current_hub_id:
+			return obj.seller_shop.hub.name
 		self.next_hub_id = get_next_destination_hub(obj, obj.current_hub_id)
 		if self.next_hub_id:
 			try:
